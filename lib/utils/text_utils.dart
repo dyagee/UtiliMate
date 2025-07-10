@@ -6,7 +6,6 @@ class TextUtils {
   /// Extracts text from an image using Google ML Kit Text Recognition.
   static Future<String?> extractTextFromImage(File imageFile) async {
     final inputImage = InputImage.fromFile(imageFile);
-    // Corrected: Use TextRecognitionScript.latin instead of TextScript.latin
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     final RecognizedText recognizedText = await textRecognizer.processImage(
       inputImage,
@@ -67,5 +66,58 @@ class TextUtils {
       hexString.write(' '); // Add a space for readability
     }
     return hexString.toString().trim();
+  }
+
+  /// Counts the number of words in a given text.
+  static int countWords(String text) {
+    if (text.trim().isEmpty) return 0;
+    // Split by one or more whitespace characters
+    return text.trim().split(RegExp(r'\s+')).length;
+  }
+
+  /// Counts the number of characters in a given text.
+  /// If includeSpaces is false, spaces are not counted.
+  static int countCharacters(String text, {bool includeSpaces = true}) {
+    if (includeSpaces) {
+      return text.length;
+    } else {
+      return text.replaceAll(' ', '').length;
+    }
+  }
+
+  /// Counts the number of lines in a given text.
+  static int countLines(String text) {
+    if (text.isEmpty) return 0;
+    // Split by newline characters and count non-empty lines
+    return text.split('\n').where((line) => line.trim().isNotEmpty).length;
+  }
+
+  /// Converts a given text to uppercase.
+  static String toUpperCase(String text) {
+    return text.toUpperCase();
+  }
+
+  /// Converts a given text to lowercase.
+  static String toLowerCase(String text) {
+    return text.toLowerCase();
+  }
+
+  /// Converts a given text to title case.
+  /// Each word's first letter is capitalized, rest are lowercase.
+  static String toTitleCase(String text) {
+    if (text.isEmpty) return '';
+    return text
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return '';
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
+  }
+
+  /// Removes extra spaces from a given text, leaving only single spaces between words.
+  static String removeExtraSpaces(String text) {
+    // Replace multiple spaces with a single space, then trim leading/trailing spaces
+    return text.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 }

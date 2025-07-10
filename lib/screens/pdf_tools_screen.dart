@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:utilimate/utils/file_utils.dart';
 import 'package:utilimate/utils/pdf_utils.dart';
+import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/custom_button.dart';
 import 'package:utilimate/widgets/loading_indicator.dart';
 import 'package:utilimate/widgets/confirmation_dialog.dart';
@@ -46,11 +47,12 @@ class _PdfToolsScreenState extends State<PdfToolsScreen> {
                 (context) => ConfirmationDialog(
                   title: 'Success!',
                   message: '$successMessage\nFile saved at: $filePath',
-                  onConfirm: () => FileUtils.openFile(filePath),
+                  // Corrected: Pass context to FileUtils.openFile
+                  onConfirm: () => FileUtils.openFile(filePath, context),
                   confirmButtonText: 'Open File',
                   showCancelButton: true,
                   cancelButtonText: 'Share File',
-                  onCancel: () => FileUtils.shareFile(filePath),
+                  onCancel: () => FileUtils.shareFile(filePath, context),
                 ),
           );
         }
@@ -146,10 +148,6 @@ class _PdfToolsScreenState extends State<PdfToolsScreen> {
           if (option == 'individual') {
             return PdfUtils.splitPdfIntoIndividualPages(pdfFile);
           } else if (option == 'range') {
-            // You would typically prompt for start/end pages here
-            // For simplicity, let's assume a fixed range or prompt via a TextField
-            // For this example, let's just split a fixed range (e.g., pages 2-3)
-            // In a real app, you'd add text fields for user input.
             final TextEditingController startPageController =
                 TextEditingController();
             final TextEditingController endPageController =
@@ -237,9 +235,6 @@ class _PdfToolsScreenState extends State<PdfToolsScreen> {
 
     if (result != null && result.files.isNotEmpty) {
       final File pdfFile = File(result.files.single.path!);
-      // Note: True PDF compression is complex and often requires server-side processing
-      // or specialized libraries. This implementation will re-save the PDF which
-      // might reduce size if images are re-encoded at a lower quality.
       return PdfUtils.compressPdf(pdfFile);
     }
     return null;
@@ -248,7 +243,10 @@ class _PdfToolsScreenState extends State<PdfToolsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('PDF Tools')),
+      appBar: const CustomAppBar(
+        title: 'PDF Tools',
+        helpContentKey: 'PDF_TOOLS',
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
