@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart'; // For Clipboard
 import 'package:utilimate/utils/text_utils.dart';
+import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/custom_button.dart';
 import 'package:utilimate/widgets/loading_indicator.dart';
 import 'package:utilimate/widgets/confirmation_dialog.dart';
@@ -243,7 +244,10 @@ Line Count: $lineCount
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Text Tools')),
+      appBar: const CustomAppBar(
+        title: 'Text Tools',
+        helpContentKey: 'TEXT_TOOLS',
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
