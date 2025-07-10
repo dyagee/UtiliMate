@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -45,7 +46,7 @@ class FileUtils {
   }
 
   /// Opens a file using the system default application.
-  static Future<void> openFile(String filePath) async {
+  static Future<void> openFile(String filePath, BuildContext context) async {
     if (filePath.isEmpty) {
       print('Invalid file path.');
       return;
@@ -59,7 +60,11 @@ class FileUtils {
   }
 
   /// Shares a file using ShareParams (share_plus v11+).
-  static Future<void> shareFile(String filePath, {String? text}) async {
+  static Future<void> shareFile(
+    String filePath,
+    BuildContext context, {
+    String? text,
+  }) async {
     if (filePath.isEmpty || !File(filePath).existsSync()) {
       print('Invalid file to share.');
       return;

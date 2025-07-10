@@ -46,11 +46,11 @@ class _PdfToolsScreenState extends State<PdfToolsScreen> {
                 (context) => ConfirmationDialog(
                   title: 'Success!',
                   message: '$successMessage\nFile saved at: $filePath',
-                  onConfirm: () => FileUtils.openFile(filePath),
+                  onConfirm: () => FileUtils.openFile(filePath, context),
                   confirmButtonText: 'Open File',
                   showCancelButton: true,
                   cancelButtonText: 'Share File',
-                  onCancel: () => FileUtils.shareFile(filePath),
+                  onCancel: () => FileUtils.shareFile(filePath, context),
                 ),
           );
         }

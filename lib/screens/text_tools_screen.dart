@@ -21,6 +21,9 @@ class _TextToolsScreenState extends State<TextToolsScreen> {
   String _convertedText = '';
   final TextEditingController _textToConvertController =
       TextEditingController();
+  final TextEditingController _textAnalysisController = TextEditingController();
+  final TextEditingController _textFormattingController =
+      TextEditingController();
 
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -142,7 +145,6 @@ class _TextToolsScreenState extends State<TextToolsScreen> {
                 _showSnackBar('Converted text copied to clipboard!');
                 Navigator.pop(context);
               },
-              confirmButtonText: 'Copy Text',
               showCancelButton: true,
               cancelButtonText: 'Close',
               onCancel: () => Navigator.pop(context),
@@ -151,9 +153,90 @@ class _TextToolsScreenState extends State<TextToolsScreen> {
     }
   }
 
+  void _performTextAnalysis() {
+    final String inputText = _textAnalysisController.text;
+    if (inputText.isEmpty) {
+      _showSnackBar('Please enter text for analysis.', isError: true);
+      return;
+    }
+
+    final int wordCount = TextUtils.countWords(inputText);
+    final int charCountWithSpaces = TextUtils.countCharacters(
+      inputText,
+      includeSpaces: true,
+    );
+    final int charCountWithoutSpaces = TextUtils.countCharacters(
+      inputText,
+      includeSpaces: false,
+    );
+    final int lineCount = TextUtils.countLines(inputText);
+
+    final String analysisResult = '''
+Word Count: $wordCount
+Character Count (with spaces): $charCountWithSpaces
+Character Count (without spaces): $charCountWithoutSpaces
+Line Count: $lineCount
+''';
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => ConfirmationDialog(
+            title: 'Text Analysis Result',
+            message: analysisResult,
+            onConfirm: () => Navigator.pop(context),
+            confirmButtonText: 'OK',
+          ),
+    );
+  }
+
+  void _performTextFormatting(String formatType) {
+    final String inputText = _textFormattingController.text;
+    if (inputText.isEmpty) {
+      _showSnackBar('Please enter text for formatting.', isError: true);
+      return;
+    }
+
+    String formattedText = '';
+    switch (formatType) {
+      case 'uppercase':
+        formattedText = TextUtils.toUpperCase(inputText);
+        break;
+      case 'lowercase':
+        formattedText = TextUtils.toLowerCase(inputText);
+        break;
+      case 'titlecase':
+        formattedText = TextUtils.toTitleCase(inputText);
+        break;
+      case 'removespaces':
+        formattedText = TextUtils.removeExtraSpaces(inputText);
+        break;
+    }
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => ConfirmationDialog(
+            title: 'Formatted Text',
+            message: formattedText,
+            onConfirm: () {
+              Clipboard.setData(ClipboardData(text: formattedText));
+              _showSnackBar('Formatted text copied to clipboard!');
+              Navigator.pop(context);
+            },
+            confirmButtonText: 'Copy Text',
+            showCancelButton: true,
+            cancelButtonText: 'Close',
+            onCancel: () => Navigator.pop(context),
+          ),
+    );
+  }
+
   @override
   void dispose() {
     _textToConvertController.dispose();
+    _textAnalysisController.dispose();
+    _textFormattingController.dispose();
     super.dispose();
   }
 
@@ -186,6 +269,7 @@ class _TextToolsScreenState extends State<TextToolsScreen> {
                   onPressed: _generatePassword,
                   buttonText: 'Generate Password',
                 ),
+                // Text Conversion Card
                 Card(
                   margin: const EdgeInsets.only(bottom: 16),
                   child: Padding(
@@ -244,6 +328,137 @@ class _TextToolsScreenState extends State<TextToolsScreen> {
                                 ),
                                 textStyle: const TextStyle(fontSize: 16),
                               ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Text Analysis Card
+                Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.analytics,
+                          size: 40,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Text Analysis',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Get insights like word, character, and line counts.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _textAnalysisController,
+                          decoration: const InputDecoration(
+                            labelText: 'Enter text for analysis',
+                            hintText: 'e.g., This is some text.',
+                          ),
+                          maxLines: 5,
+                        ),
+                        const SizedBox(height: 16),
+                        CustomButton(
+                          text: 'Analyze Text',
+                          onPressed: _performTextAnalysis,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          textStyle: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Text Formatting Card
+                Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.format_align_left,
+                          size: 40,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Text Formatting',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Convert case or remove extra spaces from your text.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _textFormattingController,
+                          decoration: const InputDecoration(
+                            labelText: 'Enter text for formatting',
+                            hintText: 'e.g., hello WORLD this is a TEST',
+                          ),
+                          maxLines: 5,
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8.0, // horizontal spacing
+                          runSpacing: 8.0, // vertical spacing
+                          children: [
+                            CustomButton(
+                              text: 'Uppercase',
+                              onPressed:
+                                  () => _performTextFormatting('uppercase'),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              textStyle: const TextStyle(fontSize: 16),
+                            ),
+                            CustomButton(
+                              text: 'Lowercase',
+                              onPressed:
+                                  () => _performTextFormatting('lowercase'),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              textStyle: const TextStyle(fontSize: 16),
+                            ),
+                            CustomButton(
+                              text: 'Title Case',
+                              onPressed:
+                                  () => _performTextFormatting('titlecase'),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              textStyle: const TextStyle(fontSize: 16),
+                            ),
+                            CustomButton(
+                              text: 'Remove Extra Spaces',
+                              onPressed:
+                                  () => _performTextFormatting('removespaces'),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              textStyle: const TextStyle(fontSize: 16),
                             ),
                           ],
                         ),
