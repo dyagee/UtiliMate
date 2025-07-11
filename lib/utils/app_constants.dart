@@ -46,5 +46,25 @@ class AppConstants {
     * **Delete File:** Tap the trash can icon next to a file to permanently delete it. Confirm your action in the dialog.
     * **Refresh Files:** Pull down to refresh the list or tap the refresh button in the bottom right corner.
     ''',
+    // Removed 'VIDEO_TOOLS' help content
+    'QR_BARCODE_TOOLS': '''
+    **QR & Barcode Tools Help:**
+    * **Generate QR Code:** Create a QR code from any text, URL, or other data you input. You can then save the generated QR code as an image.
+    * **Scan QR & Barcode:** Use your device's camera to scan QR codes and various types of barcodes. The scanned content will be displayed, and you can copy it to your clipboard.
+    ''',
+    'QR_GENERATOR': '''
+    **QR Code Generator Help:**
+    * **Enter Data:** Type or paste the text, URL, or any information you want to encode into the QR code.
+    * **Generate QR Code:** Tap the button to instantly see your QR code appear below.
+    * **Save QR Code as Image:** Once generated, tap this button to save the QR code image to your device's files. You can then open or share it.
+    ''',
+    'QR_SCANNER': '''
+    **QR & Barcode Scanner Help:**
+    * **Grant Camera Permission:** The first time you use the scanner, you'll be asked for camera permission. Please grant it to proceed.
+    * **Position Code:** Point your device's camera at the QR code or barcode. The scanner will automatically detect and read it.
+    * **Scan Result:** The scanned data will appear at the bottom of the screen.
+    * **Copy Result / Scan Again:** You can copy the scanned text to your clipboard or tap "Scan Again" to continue scanning.
+    * **Flashlight:** Tap the flashlight icon in the top right corner to toggle your device's flash for better scanning in low light.
+    ''',
   };
 }
