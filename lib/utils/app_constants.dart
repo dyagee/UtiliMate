@@ -46,7 +46,6 @@ class AppConstants {
     * **Delete File:** Tap the trash can icon next to a file to permanently delete it. Confirm your action in the dialog.
     * **Refresh Files:** Pull down to refresh the list or tap the refresh button in the bottom right corner.
     ''',
-    // Removed 'VIDEO_TOOLS' help content
     'QR_BARCODE_TOOLS': '''
     **QR & Barcode Tools Help:**
     * **Generate QR Code:** Create a QR code from any text, URL, or other data you input. You can then save the generated QR code as an image.
@@ -65,6 +64,109 @@ class AppConstants {
     * **Scan Result:** The scanned data will appear at the bottom of the screen.
     * **Copy Result / Scan Again:** You can copy the scanned text to your clipboard or tap "Scan Again" to continue scanning.
     * **Flashlight:** Tap the flashlight icon in the top right corner to toggle your device's flash for better scanning in low light.
+    ''',
+    'WEB_TOOLS': '''
+    **Web Tools Help:**
+    * **Access Online Utilities:** This section provides access to various utility tools hosted on external websites (e.g., smallseotools.com).
+    * **External Content:** Please note that these tools are provided by third-party websites. UtiliMate does not control their content, advertisements, or data handling.
+    * **File Downloads:** When using these web tools, any file uploads or downloads will be handled by the website and your device's browser, not directly by UtiliMate's internal file management.
+    * **Internet Connection Required:** An active internet connection is necessary to use these web-based tools.
+    ''',
+    'WEB_WORD_TO_PDF': '''
+    **Word to PDF Converter (Web Tool) Help:**
+    * **Upload Word File:** On the web page, you will find an option to upload your Word document (.docx).
+    * **Convert:** Follow the website's instructions to initiate the conversion.
+    * **Download PDF:** Once converted, the website will provide a link to download the resulting PDF file. This download will be handled by your device's browser.
+    ''',
+    'WEB_PDF_TO_WORD': '''
+    **PDF to Word Converter (Web Tool) Help:**
+    * **Upload PDF File:** On the web page, upload your PDF document.
+    * **Convert:** Follow the website's instructions to convert the PDF to an editable Word document.
+    * **Download Word File:** The website will provide a link to download the converted Word file (.docx). This download will be handled by your device's browser.
+    ''',
+    'WEB_PPT_TO_PDF': '''
+    **PowerPoint to PDF Converter (Web Tool) Help:**
+    * **Upload PowerPoint File:** On the web page, upload your PowerPoint presentation (.pptx).
+    * **Convert:** Follow the website's instructions to convert the presentation to PDF.
+    * **Download PDF:** The website will provide a link to download the resulting PDF. This download will be handled by your device's browser.
+    ''',
+    'WEB_EXCEL_TO_PDF': '''
+    **Excel to PDF Converter (Web Tool) Help:**
+    * **Upload Excel File:** On the web page, upload your Excel spreadsheet (.xlsx).
+    * **Convert:** Follow the website's instructions to convert the spreadsheet to PDF.
+    * **Download PDF:** The website will provide a link to download the resulting PDF. This download will be handled by your device's browser.
+    ''',
+    'WEB_CROP_IMAGE': '''
+    **Crop Image (Web Tool) Help:**
+    * **Upload Image:** On the web page, upload the image you wish to crop.
+    * **Crop:** Use the website's interface to select the desired cropping area.
+    * **Download Image:** Download the cropped image from the website.
+    ''',
+    'WEB_IMAGE_COMPRESSOR': '''
+    **Image Compressor (Web Tool) Help:**
+    * **Upload Image:** On the web page, upload the image you want to compress.
+    * **Compress:** Follow the website's instructions to compress the image.
+    * **Download Image:** Download the compressed image from the website.
+    ''',
+    'WEB_PHOTO_EDITOR': '''
+    **Online Photo Editor (Web Tool) Help:**
+    * **Upload Image:** On the web page, upload the image you want to edit.
+    * **Edit Tools:** Use the various editing tools provided by the website (e.g., crop, resize, filters).
+    * **Save/Download:** Once you're done editing, the website will provide options to save or download your modified image.
+    ''',
+    'WEB_WEBSITE_SCREENSHOT': '''
+    **Website Screenshot Generator (Web Tool) Help:**
+    * **Enter URL:** On the web page, enter the URL of the website you want to screenshot.
+    * **Generate:** Follow the website's instructions to generate the screenshot.
+    * **Download Screenshot:** Download the generated image.
+    ''',
+    'WEB_FAVICON_GENERATOR': '''
+    **Favicon Generator (Web Tool) Help:**
+    * **Upload Image:** On the web page, upload an image to use for your favicon.
+    * **Generate Favicon:** Follow the website's instructions to create the favicon.
+    * **Download Favicon:** Download the generated favicon file.
+    ''',
+    'WEB_ANY_VIDEO_DOWNLOADER': '''
+    **Any Video Downloader (Web Tool) Help:**
+    * **Paste Video URL:** On the web page, paste the URL of the video you want to download.
+    * **Download:** Follow the website's instructions to initiate the download.
+    * **Disclaimer:** Be aware of copyright and platform terms of service when downloading online content. UtiliMate does not endorse or facilitate unauthorized downloads.
+    ''',
+    'WEB_FACEBOOK_VIDEO_DOWNLOADER': '''
+    **Facebook Video Downloader (Web Tool) Help:**
+    * **Paste Facebook Video URL:** On the web page, paste the URL of the Facebook video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and Facebook's terms of service.
+    ''',
+    'WEB_TWITTER_VIDEO_DOWNLOADER': '''
+    **Twitter Video Downloader (Web Tool) Help:**
+    * **Paste Twitter Video URL:** On the web page, paste the URL of the Twitter video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and Twitter's terms of service.
+    ''',
+    'WEB_INSTAGRAM_VIDEO_DOWNLOADER': '''
+    **Instagram Video Downloader (Web Tool) Help:**
+    * **Paste Instagram Video URL:** On the web page, paste the URL of the Instagram video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and Instagram's terms of service.
+    ''',
+    'WEB_PINTEREST_VIDEO_DOWNLOADER': '''
+    **Pinterest Video Downloader (Web Tool) Help:**
+    * **Paste Pinterest Video URL:** On the web page, paste the URL of the Pinterest video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and Pinterest's terms of service.
+    ''',
+    'WEB_TIKTOK_VIDEO_DOWNLOADER': '''
+    **TikTok Video Downloader (Web Tool) Help:**
+    * **Paste TikTok Video URL:** On the web page, paste the URL of the TikTok video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and TikTok's terms of service.
+    ''',
+    'WEB_KEYWORD_SUGGESTION': '''
+    **Keyword Suggestion Tool (Web Tool) Help:**
+    * **Enter Topic/Keyword:** On the web page, enter your initial topic or keyword.
+    * **Generate Suggestions:** Follow the website's instructions to get a list of related keyword suggestions.
+    * **Analyze/Copy:** Review the suggestions and copy the relevant ones for your use.
     ''',
   };
 }

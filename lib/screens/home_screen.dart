@@ -6,8 +6,8 @@ import 'package:utilimate/screens/image_tools_screen.dart';
 import 'package:utilimate/screens/unit_converter_screen.dart';
 import 'package:utilimate/screens/file_browser_screen.dart';
 import 'package:utilimate/screens/settings_screen.dart';
-// Removed: import 'package:utilimate/screens/video_tools_screen.dart';
 import 'package:utilimate/screens/qr_barcode_tools_screen.dart';
+import 'package:utilimate/screens/web_tools_screen.dart'; // New import
 import 'package:utilimate/widgets/custom_button.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -195,33 +195,6 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Removed Video Tools Card
-                // Card(
-                //   margin: const EdgeInsets.only(bottom: 24),
-                //   child: Padding(
-                //     padding: const EdgeInsets.all(20.0),
-                //     child: Column(
-                //       children: [
-                //         Icon(Icons.video_collection, size: 60, color: Theme.of(context).colorScheme.primary),
-                //         const SizedBox(height: 16),
-                //         Text(
-                //           'Video Tools',
-                //           style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                //         ),
-                //         const SizedBox(height: 16),
-                //         CustomButton(
-                //           text: 'Go to Video Tools',
-                //           onPressed: () {
-                //             Navigator.push(
-                //               context,
-                //               MaterialPageRoute(builder: (context) => const VideoToolsScreen()),
-                //             );
-                //           },
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                // ),
                 // QR & Barcode Tools Card
                 Card(
                   margin: const EdgeInsets.only(bottom: 24),
@@ -249,6 +222,40 @@ class HomeScreen extends StatelessWidget {
                               MaterialPageRoute(
                                 builder:
                                     (context) => const QrBarcodeToolsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Web Tools Card (NEW)
+                Card(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.web,
+                          size: 60,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Web Tools',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 16),
+                        CustomButton(
+                          text: 'Browse Web Tools',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const WebToolsScreen(),
                               ),
                             );
                           },
