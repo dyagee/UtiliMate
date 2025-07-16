@@ -1,43 +1,57 @@
+// lib/widgets/confirmation_dialog.dart
 import 'package:flutter/material.dart';
 
 class ConfirmationDialog extends StatelessWidget {
   final String title;
-  final String message; // Reverted from Widget content;
+  final String message;
   final VoidCallback onConfirm;
   final String confirmButtonText;
-  final VoidCallback? onCancel;
-  final String? cancelButtonText;
+  final Color? confirmButtonColor; // Added optional confirmButtonColor
   final bool showCancelButton;
+  final String? cancelButtonText;
+  final VoidCallback? onCancel;
 
   const ConfirmationDialog({
     super.key,
     required this.title,
-    required this.message, // Reverted from required this.content,
+    required this.message,
+    required this.onConfirm,
     this.confirmButtonText = 'OK',
-    this.onCancel,
-    this.cancelButtonText,
+    this.confirmButtonColor, // Initialize the parameter
     this.showCancelButton = false,
-    required this.onConfirm, // Ensure onConfirm is required
+    this.cancelButtonText = 'Cancel',
+    this.onCancel,
   });
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(title),
-      content: SingleChildScrollView(
-        child: Text(message), // Use Text widget with String message
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(title, style: Theme.of(context).textTheme.headlineSmall),
+      content: Text(message, style: Theme.of(context).textTheme.bodyLarge),
       actions: <Widget>[
         if (showCancelButton)
           TextButton(
-            onPressed: onCancel ?? () => Navigator.of(context).pop(),
-            child: Text(cancelButtonText ?? 'Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              onCancel?.call(); // Call optional onCancel callback
+            },
+            child: Text(cancelButtonText!),
           ),
         ElevatedButton(
           onPressed: () {
+            Navigator.of(context).pop();
             onConfirm();
-            Navigator.of(context).pop(); // Dismiss dialog after action
           },
+          style: ElevatedButton.styleFrom(
+            backgroundColor:
+                confirmButtonColor ??
+                Theme.of(context).colorScheme.primary, // Use provided color
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
           child: Text(confirmButtonText),
         ),
       ],

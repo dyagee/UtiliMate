@@ -92,7 +92,7 @@ class PdfUtils {
   }
 
   /// Splits a PDF file into individual pages.
-  static Future<String?> splitPdfIntoIndividualPages(File pdfFile) async {
+  static Future<List<String>> splitPdfIntoIndividualPages(File pdfFile) async {
     try {
       final pdfBytes = await pdfFile.readAsBytes();
       final originalDoc = sync_pdf.PdfDocument(inputBytes: pdfBytes);
@@ -100,7 +100,7 @@ class PdfUtils {
           .split('/')
           .last
           .replaceAll('.pdf', '');
-      final String outputDir = await FileUtils.getAppDocumentsPath();
+      // Removed: final Directory appDirectory = await FileUtils.getAppDirectory();
       List<String> savedPaths = [];
 
       for (int i = 0; i < originalDoc.pages.count; i++) {
@@ -118,15 +118,18 @@ class PdfUtils {
         final List<int> pageBytes = await newDoc.save();
         final String fileName = '${baseFileName}_page_${i + 1}.pdf';
         final String? savedPath = await FileUtils.saveFile(pageBytes, fileName);
-        if (savedPath != null) savedPaths.add(savedPath);
+        if (savedPath != null) {
+          savedPaths.add(savedPath);
+        }
         newDoc.dispose();
       }
 
       originalDoc.dispose();
-      return savedPaths.isNotEmpty ? 'Pages saved to: $outputDir' : null;
+      // Changed return message to return the list directly, as per signature
+      return savedPaths;
     } catch (e) {
       print('Error splitting PDF: $e');
-      return null;
+      return []; // Return empty list on error
     }
   }
 
