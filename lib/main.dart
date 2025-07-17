@@ -1,8 +1,8 @@
 // main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:utilimate/services/theme_service.dart';
 import 'package:utilimate/screens/home_screen.dart';
+import 'package:utilimate/services/theme_service.dart';
 import 'package:utilimate/screens/file_browser_screen.dart';
 import 'package:utilimate/screens/settings_screen.dart';
 import 'package:utilimate/widgets/categories_modal_sheet.dart';

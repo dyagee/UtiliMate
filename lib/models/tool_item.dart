@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 // Enum to distinguish between offline and web-based tools
 enum ToolType {
   offline, // Native, works without internet (mostly)
-  web, // Requires internet, loads in WebView
+  online, // Requires internet, loads in WebView
 }
 
 /// A data model for representing a single tool in the app.

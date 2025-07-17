@@ -33,9 +33,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
     (function() {
       var style = document.createElement('style');
       style.innerHTML = `
-        nav.navbar,
-        div.ap_apex_ad,
-        div._ap_apex_ad,
+        .navbar,
+        .ap_apex_ad,
+        ._ap_apex_ad,
         .vjs-tech,
         #accordion_content,
         .ml-md-4.ml-0.sede_ara,
@@ -45,7 +45,19 @@ class _WebViewScreenState extends State<WebViewScreen> {
         #ADP_41163_336x280_00000001-4e3de56e-878b-4041-9f85-2fc7fad4fad3,
         #slider_wrapper,
         #uph,
-
+        .header,
+        .header_v2,
+        .main-form_watch.main-form_watch_show,
+        .link-plus,
+        .article-1,
+        .other-services,
+        .b-instruction,
+        .b-android,
+        .b-install,
+        .footer_v2,
+        .facebook-page,
+        .main-supported-services,
+        .shown-mobile-only
         {
           display: none !important;
         }
