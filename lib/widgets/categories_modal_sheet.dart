@@ -79,10 +79,10 @@ class CategoriesModalSheet extends StatelessWidget {
                         children: [
                           Icon(
                             category.icon,
-                            size: 36,
+                            size: 30,
                             color: Theme.of(context).colorScheme.primary,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(
                             category.name,
                             textAlign: TextAlign.center,
@@ -90,11 +90,11 @@ class CategoriesModalSheet extends StatelessWidget {
                               context,
                             ).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                             overflow: TextOverflow.ellipsis,
                             maxLines:
-                                2, // Allow up to 2 lines for category names
+                                4, // Allow up to 2 lines for category names
                           ),
                         ],
                       ),

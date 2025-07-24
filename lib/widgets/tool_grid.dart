@@ -24,9 +24,10 @@ class ToolGrid extends StatelessWidget {
             ),
             child: Text(
               title!,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
           ),
         Expanded(

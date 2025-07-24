@@ -13,6 +13,7 @@ class HomeScreen extends StatelessWidget {
       appBar: const CustomAppBar(
         title: 'All Tools',
         helpContentKey: 'ALL_TOOLS_CATEGORY', // New help key for All Tools
+        showBackButton: false,
       ),
       body: ToolGrid(
         tools: AppConstants.allTools, // Display all tools

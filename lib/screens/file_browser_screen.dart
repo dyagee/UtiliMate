@@ -178,6 +178,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
       appBar: const CustomAppBar(
         title: 'File Manager',
         helpContentKey: 'FILE_MANAGEMENT_TOOL',
+        showBackButton: false,
       ),
       body: Stack(
         children: [
