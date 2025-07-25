@@ -1,3 +1,201 @@
+// ignore_for_file: avoid_print
+// web_view_screen.dart
+
+import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:utilimate/widgets/custom_app_bar.dart';
+
+class WebViewScreen extends StatefulWidget {
+  final String title;
+  final String url;
+  final String helpContentKey;
+
+  const WebViewScreen({
+    super.key,
+    required this.title,
+    required this.url,
+    required this.helpContentKey,
+  });
+
+  @override
+  State<WebViewScreen> createState() => _WebViewScreenState();
+}
+
+class _WebViewScreenState extends State<WebViewScreen> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+  bool _showDisclaimer = true; // New state variable for disclaimer visibility
+
+  // JavaScript to inject CSS rules for hiding elements immediately.
+  // This CSS will be added to the <head> of the loaded page.
+  // Using !important to ensure override.
+  // ALL SELECTORS ARE COMBINED WITH COMMAS.
+  final String _cssInjectionJs = """
+    (function() {
+      var style = document.createElement('style');
+      style.innerHTML = `
+        .navbar,
+        .ap_apex_ad,
+        ._ap_apex_ad,
+        .vjs-tech,
+        #accordion_content,
+        .ml-md-4.ml-0.sede_ara,
+        .as_seen,
+        .main_fpt,
+        .for_footer_ad,
+        #ADP_41163_336x280_00000001-4e3de56e-878b-4041-9f85-2fc7fad4fad3,
+        #slider_wrapper,
+        #uph,
+        .header,
+        .header_v2,
+        .main-form_watch.main-form_watch_show,
+        .link-plus,
+        .article-1,
+        .other-services,
+        .b-instruction,
+        .b-android,
+        .b-install,
+        .footer_v2,
+        .facebook-page,
+        .main-supported-services,
+        .shown-mobile-only
+        {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+      console.log('UtiliMate: CSS cleanup script injected on page started.');
+    })();
+  """;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setBackgroundColor(
+            const Color(0x00000000),
+          ) // Ensure background is transparent
+          ..setNavigationDelegate(
+            NavigationDelegate(
+              onProgress: (int progress) {
+                if (mounted) {
+                  setState(() {
+                    _isLoading = progress < 100;
+                  });
+                }
+              },
+              onPageStarted: (String url) {
+                if (mounted) {
+                  setState(() {
+                    _isLoading = true;
+                  });
+                }
+                print('Page started loading: $url');
+                // CRITICAL: Inject CSS here, as early as possible
+                _controller.runJavaScript(_cssInjectionJs);
+              },
+              onPageFinished: (String url) async {
+                if (mounted) {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                }
+                print('Page finished loading: $url');
+              },
+              onWebResourceError: (WebResourceError error) {
+                print('''
+              Page resource error:
+                code: ${error.errorCode}
+                description: ${error.description}
+                errorType: ${error.errorType}
+                isForMainFrame: ${error.isForMainFrame}
+            ''');
+                // if (mounted) {
+                //   // Added mounted check for SnackBar
+                //   ScaffoldMessenger.of(context).showSnackBar(
+                //     SnackBar(
+                //       content: Text('Error loading page: ${error.description}'),
+                //     ),
+                //   );
+                // }
+              },
+              onNavigationRequest: (NavigationRequest request) {
+                return NavigationDecision.navigate;
+                // final Uri uri = Uri.parse(request.url);
+                // const String allowedHost = 'smallseotools.com';
+
+                // if (uri.host == allowedHost ||
+                //     uri.host.endsWith('.$allowedHost')) {
+                //   return NavigationDecision.navigate;
+                // }
+                // print('Blocked navigation to external URL: ${request.url}');
+                // return NavigationDecision.prevent;
+              },
+            ),
+          )
+          ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(
+        title: widget.title,
+        helpContentKey: widget.helpContentKey,
+      ),
+      body: Stack(
+        children: [
+          WebViewWidget(controller: _controller),
+          if (_isLoading) const Center(child: CircularProgressIndicator()),
+          // Disclaimer overlay - now closable
+          Visibility(
+            // Use Visibility to hide/show the disclaimer
+            visible: _showDisclaimer,
+            child: Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withAlpha(
+                  (0.9 * 255).round(),
+                ), // Using withAlpha for deprecation fix
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  // Use Row to place text and close button
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Disclaimer: This tool is provided via an external website. UtiliMate is not responsible for its content, ads, or how it handles your files. File downloads may occur outside the app\'s direct control.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      onPressed: () {
+                        setState(() {
+                          _showDisclaimer = false; // Hide the disclaimer
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // lib/utils/app_constants.dart
 import 'package:flutter/material.dart';
 import 'package:utilimate/models/tool_item.dart';
@@ -60,8 +258,6 @@ import 'package:utilimate/screens/calculators_category_screen.dart';
 import 'package:utilimate/screens/generators_category_screen.dart';
 import 'package:utilimate/screens/time_tools_category_screen.dart';
 import 'package:utilimate/screens/color_tools_category_screen.dart';
-// FIX: Correct import for FileBrowserScreen
-import 'package:utilimate/screens/file_browser_screen.dart';
 
 class AppConstants {
   // Helper for 'All Tools' category help content
@@ -173,7 +369,7 @@ class AppConstants {
     'VIDEO_DOWNLOADERS_CATEGORY': '''
     **Video Downloaders Category Help:**
     Access various online video downloaders via external websites.
-    **Disclaimer:** Be aware of copyright and platform terms of service when downloading online content. UtiliMate does not endorse or facilitate unauthorized downloads. Download links will open in your device's default browser.
+    **Disclaimer:** Be aware of copyright and platform terms of service when downloading online content. UtiliMate does not endorse or facilitate unauthorized downloads.
     ''',
     'WEB_TOOLS_CATEGORY': '''
     **Online Tools Category Help:**
@@ -240,7 +436,37 @@ class AppConstants {
     **Any Video Downloader (Online Tool) Help:**
     * **Paste Video URL:** On the web page, paste the URL of the video you want to download.
     * **Download:** Follow the website's instructions to initiate the download.
-    * **Disclaimer:** Be aware of copyright and platform terms of service when downloading online content. Download links will open in your device's default browser.
+    * **Disclaimer:** Be aware of copyright and platform terms of service when downloading online content. UtiliMate does not endorse or facilitate unauthorized downloads.
+    ''',
+    'WEB_FACEBOOK_VIDEO_DOWNLOADER': '''
+    **Facebook Video Downloader (Online Tool) Help:**
+    * **Paste Facebook Video URL:** On the web page, paste the URL of the Facebook video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and Facebook's terms of service.
+    ''',
+    'WEB_TWITTER_VIDEO_DOWNLOADER': '''
+    **Twitter Video Downloader (Online Tool) Help:**
+    * **Paste Twitter Video URL:** On the web page, paste the URL of the Twitter video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and Twitter's terms of service.
+    ''',
+    'WEB_INSTAGRAM_VIDEO_DOWNLOADER': '''
+    **Instagram Video Downloader (Online Tool) Help:**
+    * **Paste Instagram Video URL:** On the web page, paste the URL of the Instagram video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and Instagram's terms of service.
+    ''',
+    'WEB_PINTEREST_VIDEO_DOWNLOADER': '''
+    **Pinterest Video Downloader (Online Tool) Help:**
+    * **Paste Pinterest Video URL:** On the web page, paste the URL of the Pinterest video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and Pinterest's terms of service.
+    ''',
+    'WEB_TIKTOK_VIDEO_DOWNLOADER': '''
+    **TikTok Video Downloader (Online Tool) Help:**
+    * **Paste TikTok Video URL:** On the web page, paste the URL of the TikTok video.
+    * **Download:** Follow the website's instructions to download the video.
+    * **Disclaimer:** Respect copyright and TikTok's terms of service.
     ''',
     'WEB_KEYWORD_SUGGESTION': '''
     **Keyword Suggestion Tool (Online Tool) Help:**
@@ -308,7 +534,7 @@ class AppConstants {
     Pick a single random number within a specified range (from 1 up to your chosen maximum number).
     * **Maximum Range:** Enter the highest possible number you want to be picked (e.g., 100). The lowest possible number is always 1.
     * **Pick Number:** Tap the button to generate a random number within your defined range.
-    * **Copy to Clipboard:** Easily copy the picked number for.
+    * **Copy to Clipboard:** Easily copy the picked number for use.
     ''',
     'FIND_REPLACE_TOOL': '''
     **Find and Replace Help:**
@@ -361,7 +587,6 @@ class AppConstants {
   };
 
   // --- All Tool Items List ---
-  // FIX: Removed 'const' keyword here
   static final List<ToolItem> allTools = [
     // PDF Tools (Offline)
     ToolItem(
@@ -653,18 +878,73 @@ class AppConstants {
       helpContentKey: 'WEB_FAVICON_GENERATOR',
     ),
 
-    // Consolidated Video Downloader to SaveFrom.net
+    // Video Downloaders (Online)
     ToolItem(
-      name: 'Universal Video Downloader',
+      name: 'Any Video Downloader',
       icon: Icons.download_for_offline,
       screen: const WebViewScreen(
-        title: 'Universal Video Downloader',
-        url: 'https://en1.savefrom.net/', // Consolidated URL
-        helpContentKey:
-            'WEB_ANY_VIDEO_DOWNLOADER', // Re-using this general help key
+        title: 'Any Video Downloader',
+        url: 'https://smallseotools.com/online-video-downloader/',
+        helpContentKey: 'WEB_ANY_VIDEO_DOWNLOADER',
       ),
       type: ToolType.online,
       helpContentKey: 'WEB_ANY_VIDEO_DOWNLOADER',
+    ),
+    ToolItem(
+      name: 'Facebook Video Downloader',
+      icon: Icons.facebook,
+      screen: const WebViewScreen(
+        title: 'Facebook Video Downloader',
+        url:
+            'https://en1.savefrom.net/9-how-to-download-facebook-video-6CY.html',
+        helpContentKey: 'WEB_FACEBOOK_VIDEO_DOWNLOADER',
+      ),
+      type: ToolType.online,
+      helpContentKey: 'WEB_FACEBOOK_VIDEO_DOWNLOADER',
+    ),
+    ToolItem(
+      name: 'Twitter Video Downloader',
+      icon: Icons.alternate_email,
+      screen: const WebViewScreen(
+        title: 'Twitter Video Downloader',
+        url: 'https://smallseotools.com/twitter-video-downloader/',
+        helpContentKey: 'WEB_TWITTER_VIDEO_DOWNLOADER',
+      ),
+      type: ToolType.online,
+      helpContentKey: 'WEB_TWITTER_VIDEO_DOWNLOADER',
+    ),
+    ToolItem(
+      name: 'Instagram Video Downloader',
+      icon: Icons.camera_alt,
+      screen: const WebViewScreen(
+        title: 'Instagram Video Downloader',
+        url: 'https://smallseotools.com/instagram-video-downloader/',
+        helpContentKey: 'WEB_INSTAGRAM_VIDEO_DOWNLOADER',
+      ),
+      type: ToolType.online,
+      helpContentKey: 'WEB_INSTAGRAM_VIDEO_DOWNLOADER',
+    ),
+    ToolItem(
+      name: 'Pinterest Video Downloader',
+      icon: Icons.push_pin,
+      screen: const WebViewScreen(
+        title: 'Pinterest Video Downloader',
+        url: 'https://smallseotools.com/pinterest-video-downloader/',
+        helpContentKey: 'WEB_PINTEREST_VIDEO_DOWNLOADER',
+      ),
+      type: ToolType.online,
+      helpContentKey: 'WEB_PINTEREST_VIDEO_DOWNLOADER',
+    ),
+    ToolItem(
+      name: 'TikTok Video Downloader',
+      icon: Icons.music_note,
+      screen: const WebViewScreen(
+        title: 'TikTok Video Downloader',
+        url: 'https://smallseotools.com/tiktok-video-downloader/',
+        helpContentKey: 'WEB_TIKTOK_VIDEO_DOWNLOADER',
+      ),
+      type: ToolType.online,
+      helpContentKey: 'WEB_TIKTOK_VIDEO_DOWNLOADER',
     ),
 
     // SEO Tools (Online)
@@ -720,10 +1000,14 @@ class AppConstants {
           )
           .toList();
 
-  // Simplified getVideoDownloaders to only return the consolidated one
   static List<ToolItem> getVideoDownloaders() =>
       allTools
-          .where((tool) => tool.helpContentKey == 'WEB_ANY_VIDEO_DOWNLOADER')
+          .where(
+            (tool) =>
+                tool.type == ToolType.online &&
+                tool.helpContentKey.startsWith('WEB_') &&
+                tool.helpContentKey.contains('VIDEO_DOWNLOADER'),
+          )
           .toList();
 
   static List<ToolItem> getQrBarcodeTools() =>
@@ -770,7 +1054,6 @@ class AppConstants {
           .toList();
 
   // --- Categories for Modal Sheet ---
-  // FIX: Removed 'const' keyword here
   static final List<CategoryItem> toolCategories = [
     CategoryItem(
       name: 'PDF Tools',
@@ -829,11 +1112,252 @@ class AppConstants {
       icon: Icons.color_lens,
       screen: const ColorToolsCategoryScreen(),
     ),
-    // FIX: Add File Manager to categories, using FileBrowserScreen
-    CategoryItem(
-      name: 'File Manager',
-      icon: Icons.folder_open,
-      screen: const FileBrowserScreen(), // Use the correct class name
-    ),
   ];
+}
+
+
+
+// lib/screens/web_view_screen.dart with en1.save external download.
+import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart'; // Import url_launcher
+import 'package:utilimate/widgets/custom_app_bar.dart';
+import 'dart:developer' as developer; // For logging
+
+class WebViewScreen extends StatefulWidget {
+  final String title;
+  final String url;
+  final String helpContentKey;
+
+  const WebViewScreen({
+    super.key,
+    required this.title,
+    required this.url,
+    required this.helpContentKey,
+  });
+
+  @override
+  State<WebViewScreen> createState() => _WebViewScreenState();
+}
+
+class _WebViewScreenState extends State<WebViewScreen> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+  String _currentUrl = ''; // To track the current URL in the webview
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUrl = widget.url; // Initialize with the starting URL
+
+    _controller =
+        WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          // Add a JavaScript channel to receive messages from the webview
+          ..addJavaScriptChannel(
+            'FlutterDownloadChannel',
+            onMessageReceived: (JavaScriptMessage message) {
+              developer.log('JS Channel Message: ${message.message}');
+              _handleJsDownloadUrl(message.message);
+            },
+          )
+          ..setNavigationDelegate(
+            NavigationDelegate(
+              onProgress: (int progress) {
+                // Update loading status
+                if (mounted) {
+                  setState(() {
+                    _isLoading = progress < 100;
+                  });
+                }
+              },
+              onPageStarted: (String url) {
+                developer.log('WebView: Page started loading: $url');
+                if (mounted) {
+                  setState(() {
+                    _isLoading = true;
+                    _currentUrl =
+                        url; // Update current URL when page starts loading
+                  });
+                }
+              },
+              onPageFinished: (String url) {
+                developer.log('WebView: Page finished loading: $url');
+                if (mounted) {
+                  setState(() {
+                    _isLoading = false;
+                    _currentUrl =
+                        url; // Update current URL when page finishes loading
+                  });
+                }
+                // FIX: Inject JavaScript after page finishes loading
+                _injectJavaScript();
+              },
+              onWebResourceError: (WebResourceError error) {
+                developer.log(
+                  'WebView: Web resource error: ${error.description}, URL: ${error.url}',
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error loading page: ${error.description}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  setState(() {
+                    _isLoading = false;
+                  });
+                }
+              },
+              onNavigationRequest: (NavigationRequest request) async {
+                developer.log('WebView: Navigation request: ${request.url}');
+                final uri = Uri.parse(request.url);
+
+                // --- Handling for other external links (e.g., ads, social media shares, new tabs) ---
+                // If the request is not for the main frame (e.g., pop-up, ad) and not from the original host
+                // or if it's a new window request (target="_blank" like behavior)
+                // Also, if the URL's host is different from the initial widget.url's host, launch externally.
+                if (!request.isMainFrame ||
+                    !uri.host.contains(Uri.parse(widget.url).host)) {
+                  developer.log(
+                    'WebView: Detected non-main frame or external host navigation: ${request.url}',
+                  );
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    return NavigationDecision.prevent;
+                  }
+                }
+
+                // Allow normal navigation within the WebView
+                return NavigationDecision.navigate;
+              },
+            ),
+          )
+          ..loadRequest(Uri.parse(widget.url));
+  }
+
+  // FIX: Method to handle URLs received from JavaScript
+  void _handleJsDownloadUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Download/External link opened in browser.'),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open link: $url'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  // FIX: JavaScript injection to intercept download links
+  void _injectJavaScript() {
+    _controller.runJavaScript('''
+      // Override window.open to send URLs to Flutter
+      var originalWindowOpen = window.open;
+      window.open = function(url, name, features) {
+          if (url && url.startsWith('http')) { // Only intercept http/https URLs
+              FlutterDownloadChannel.postMessage(url);
+              return null; // Prevent the default window.open behavior
+          }
+          return originalWindowOpen(url, name, features);
+      };
+
+      // Function to check if a URL looks like a download
+      function isDownloadUrl(url) {
+          if (!url) return false;
+          var path = url.toLowerCase();
+          return path.endsWith('.mp4') ||
+                 path.endsWith('.mov') ||
+                 path.endsWith('.avi') ||
+                 path.endsWith('.mkv') ||
+                 path.endsWith('.webm') ||
+                 path.endsWith('.mp3') ||
+                 path.endsWith('.wav') ||
+                 path.endsWith('.zip') ||
+                 path.endsWith('.rar') ||
+                 path.endsWith('.pdf') ||
+                 path.endsWith('.doc') || path.endsWith('.docx') ||
+                 path.endsWith('.xls') || path.endsWith('.xlsx') ||
+                 path.endsWith('.ppt') || path.endsWith('.pptx');
+      }
+
+      // Intercept clicks on anchor tags
+      document.addEventListener('click', function(event) {
+          var target = event.target;
+          // Traverse up the DOM to find an anchor tag
+          while (target && target.tagName !== 'A') {
+              target = target.parentNode;
+          }
+
+          if (target && target.tagName === 'A') {
+              var href = target.href;
+              // Check if it's a download link or an external link
+              if (isDownloadUrl(href) || (href && !href.startsWith(window.location.origin))) {
+                  FlutterDownloadChannel.postMessage(href);
+                  event.preventDefault(); // Prevent default navigation
+                  event.stopPropagation(); // Stop propagation
+              }
+          }
+      }, true); // Use capture phase to ensure our listener runs first
+
+      // --- Specific for smallseotools.com/download-video ---
+      // This part tries to find the 'downurl' parameter if it's on the current page URL
+      // and proactively sends it to Flutter.
+      if (window.location.href.includes('smallseotools.com/download-video')) {
+          var urlParams = new URLSearchParams(window.location.search);
+          var downurl = urlParams.get('downurl');
+          if (downurl) {
+              try {
+                  var decodedDownurl = decodeURIComponent(downurl);
+                  if (decodedDownurl && decodedDownurl.startsWith('http')) {
+                      FlutterDownloadChannel.postMessage(decodedDownurl);
+                  }
+              } catch (e) {
+                  // Error decoding URL, log it for debugging
+                  console.error('Error decoding downurl:', e);
+              }
+          }
+      }
+    ''');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(
+        title: widget.title,
+        helpContentKey: widget.helpContentKey,
+      ),
+      body: Stack(
+        children: [
+          WebViewWidget(controller: _controller),
+          if (_isLoading) const Center(child: CircularProgressIndicator()),
+          // Optional: Display current URL for debugging/user info
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              color: Colors.black54,
+              child: Text(
+                _currentUrl,
+                style: const TextStyle(color: Colors.white, fontSize: 10),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

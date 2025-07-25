@@ -8,6 +8,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String helpContentKey;
   final bool showBackButton;
   final PreferredSizeWidget? bottom;
+  final List<Widget>? actions;
 
   const CustomAppBar({
     super.key,
@@ -15,6 +16,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.helpContentKey,
     this.showBackButton = true,
     this.bottom,
+    this.actions,
   });
 
   @override
@@ -33,7 +35,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: () => Navigator.of(context).pop(),
               )
               : null,
+      // Merge provided actions with the default help button
       actions: [
+        ...?actions, // NEW: Spread the provided actions first
         IconButton(
           icon: const Icon(Icons.help_outline),
           onPressed: () {
@@ -44,7 +48,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   title: '$title Help',
                   markdownContent:
                       AppConstants.helpContent[helpContentKey] ??
-                      'No help content available.', // FIX: Changed 'content' to 'markdownContent'
+                      'No help content available.',
                 );
               },
             );

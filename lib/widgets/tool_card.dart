@@ -25,33 +25,36 @@ class ToolCard extends StatelessWidget {
             children: [
               Icon(
                 tool.icon,
-                size: 30,
+                size: 24,
                 color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(height: 4),
               // Increased flex to give more space to the text
               Expanded(
-                flex: 3, // Give more flex to the text
+                flex: 10, // Give more flex to the text
                 child: Align(
                   // Align text to center vertically within its expanded space
                   alignment: Alignment.center,
-                  child: Text(
-                    tool.name,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.normal,
-                      fontSize:
-                          12, // Slightly increased font size for readability
+                  child: SingleChildScrollView(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: Text(
+                      tool.name,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.normal,
+                        fontSize:
+                            12, // Slightly increased font size for readability
+                      ),
+                      overflow: TextOverflow.visible,
+                      maxLines: 12, // Allow up to 8 lines for the name
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 4, // Allow up to 3 lines for the name
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               // Reduced flex for the tag to ensure it takes minimal space
               Expanded(
-                flex: 1, // Give less flex to the tag
+                flex: 2, // Give less flex to the tag
                 child: Align(
                   alignment: Alignment.bottomCenter, // Align tag to bottom
                   child: Container(
@@ -70,7 +73,7 @@ class ToolCard extends StatelessWidget {
                       tool.type == ToolType.offline ? 'Offline' : 'Online',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 7,
                         color:
                             tool.type == ToolType.offline
                                 ? Colors.green.shade800

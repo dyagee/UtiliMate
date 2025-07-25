@@ -53,9 +53,11 @@ dependencies:
   shared_preferences: ^2.5.3
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.0.1
-  webview_flutter: ^4.13.0
+  webview_flutter: ^4.7.0
   intl: ^0.20.2
   http: ^1.4.0
+  url_launcher: ^6.0.0
+  android_path_provider: ^0.3.1
 
 dev_dependencies:
   flutter_test:
