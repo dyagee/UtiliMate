@@ -60,8 +60,6 @@ import 'package:utilimate/screens/calculators_category_screen.dart';
 import 'package:utilimate/screens/generators_category_screen.dart';
 import 'package:utilimate/screens/time_tools_category_screen.dart';
 import 'package:utilimate/screens/color_tools_category_screen.dart';
-// FIX: Correct import for FileBrowserScreen
-import 'package:utilimate/screens/file_browser_screen.dart';
 
 class AppConstants {
   // Helper for 'All Tools' category help content
@@ -240,7 +238,7 @@ class AppConstants {
     **Any Video Downloader (Online Tool) Help:**
     * **Paste Video URL:** On the web page, paste the URL of the video you want to download.
     * **Download:** Follow the website's instructions to initiate the download.
-    * **Disclaimer:** Be aware of copyright and platform terms of service when downloading online content. Download links will open in your device's default browser.
+    * **Disclaimer:** Be aware of copyright and platform terms of service when downloading online content. UtiliMate does not endorse or facilitate unauthorized downloads. Download links will open in your device's default browser.
     ''',
     'WEB_KEYWORD_SUGGESTION': '''
     **Keyword Suggestion Tool (Online Tool) Help:**
@@ -340,7 +338,7 @@ class AppConstants {
     * **Hex Input:** Enter a 6-digit (e.g., FF0000) or 8-digit (e.g., FFFF0000 for transparent red) Hex code. The other fields and preview will update.
     * **RGB Input:** Enter Red, Green, and Blue values (0-255). The other fields and preview will update.
     * **HSL Input:** Enter Hue (0-360), Saturation (0-100%), and Lightness (0-100%). The other fields and preview will update.
-    * **Copy to Clipboard:** Use the copy icons next to each format to quickly copy the color code.
+    * **Copy/Clear:** Easily copy the modified text or clear the input.
     ''',
     'CALCULATORS_CATEGORY': '''
     **Calculators Category Help:**
@@ -361,7 +359,7 @@ class AppConstants {
   };
 
   // --- All Tool Items List ---
-  // FIX: Removed 'const' keyword here
+  // Removed 'const' keyword here
   static final List<ToolItem> allTools = [
     // PDF Tools (Offline)
     ToolItem(
@@ -770,7 +768,7 @@ class AppConstants {
           .toList();
 
   // --- Categories for Modal Sheet ---
-  // FIX: Removed 'const' keyword here
+  // Removed 'const' keyword here
   static final List<CategoryItem> toolCategories = [
     CategoryItem(
       name: 'PDF Tools',
@@ -829,11 +827,11 @@ class AppConstants {
       icon: Icons.color_lens,
       screen: const ColorToolsCategoryScreen(),
     ),
-    // FIX: Add File Manager to categories, using FileBrowserScreen
-    CategoryItem(
-      name: 'File Manager',
-      icon: Icons.folder_open,
-      screen: const FileBrowserScreen(), // Use the correct class name
-    ),
+    // REMOVED: File Manager should not be in categories as it's a bottom nav item.
+    // CategoryItem(
+    //   name: 'File Manager',
+    //   icon: Icons.folder_open,
+    //   screen: const FileBrowserScreen(),
+    // ),
   ];
 }
