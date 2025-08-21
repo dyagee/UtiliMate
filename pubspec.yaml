@@ -60,6 +60,8 @@ dependencies:
   android_path_provider: ^0.3.1
   flutter_colorpicker: ^1.1.0
   faker_dart: ^0.2.2
+  connectivity_plus: ^6.1.5
+  flutter_native_splash: ^2.4.6
 
 dev_dependencies:
   flutter_test:
@@ -71,7 +73,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-
+  
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -84,9 +86,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - lib/assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -113,3 +114,20 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Configuration for flutter_native_splash package
+flutter_native_splash:
+  # Set the background color to sky blue (a common hex for sky blue)
+  color: "#2061c1" # Or you could use a specific hex value like 0xFF87CEEB
+
+  # Path to your utilimate-shinny.png image for the splash screen logo
+  image: "lib/assets/images/utilimate-shinny.png"
+
+  # (Optional) For Android 12 and above, you can specify branding images
+  # that appear at the bottom of the splash screen.
+  # If you want the same image, you can set it here too, or omit if not needed.
+  # android_12:
+  #   image: "assets/images/utilimate-shinny.png"
+  #   color: "#87CEEB"
+  #   icon_background_color: "#87CEEB" # Usually matches the main color
+  #   branding: "assets/images/your_optional_branding_image.png"

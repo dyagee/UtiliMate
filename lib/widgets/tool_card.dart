@@ -1,12 +1,40 @@
 // lib/widgets/tool_card.dart
 import 'package:flutter/material.dart';
 import 'package:utilimate/models/tool_item.dart';
+import 'package:utilimate/services/connectivity_service.dart'; // Import the service
+import 'package:utilimate/widgets/message_box.dart'; // Import the custom message box
 
 class ToolCard extends StatelessWidget {
   final ToolItem tool;
-  final VoidCallback onTap;
+  final VoidCallback onTap; // 'onTap' is still a required parameter
 
-  const ToolCard({super.key, required this.tool, required this.onTap});
+  const ToolCard({
+    super.key,
+    required this.tool,
+    required this.onTap, // Keep this as required
+  });
+
+  // Helper to show custom message box
+  Future<void> _showMessageBox(
+    BuildContext context,
+    String title,
+    String message, {
+    bool isError = false,
+  }) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return MessageBox(
+          title: title,
+          message: message,
+          isError: isError,
+          onOk: () {
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,25 +43,43 @@ class ToolCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       child: InkWell(
         borderRadius: BorderRadius.circular(16.0),
-        onTap: onTap,
+        onTap: () async {
+          // Get the singleton instance of ConnectivityService
+          final connectivityService = ConnectivityService();
+
+          // Check connectivity ONLY if the tool is an online tool
+          if (tool.type == ToolType.online) {
+            final isConnected = connectivityService.isConnected;
+            if (!isConnected) {
+              // If offline, show error message and DO NOT call the parent's onTap
+              await _showMessageBox(
+                context, // Pass context to the helper function
+                'No Internet Connection',
+                'This is an online tool and requires an active internet connection. Please connect to the internet to use it. 🌐',
+                isError: true,
+              );
+              return; // Prevent further execution of the onTap callback
+            }
+          }
+          // If the tool is offline, OR if it's online and there IS connectivity,
+          // then proceed to call the onTap callback provided by the parent.
+          onTap();
+        },
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.spaceBetween, // Distribute space
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
                 tool.icon,
-                size: 24,
+                size: 28,
                 color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(height: 4),
-              // Increased flex to give more space to the text
               Expanded(
-                flex: 10, // Give more flex to the text
+                flex: 10,
                 child: Align(
-                  // Align text to center vertically within its expanded space
                   alignment: Alignment.center,
                   child: SingleChildScrollView(
                     physics: AlwaysScrollableScrollPhysics(),
@@ -42,21 +88,19 @@ class ToolCard extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.normal,
-                        fontSize:
-                            12, // Slightly increased font size for readability
+                        fontSize: 14,
                       ),
                       overflow: TextOverflow.visible,
-                      maxLines: 12, // Allow up to 8 lines for the name
+                      maxLines: 12,
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 2),
-              // Reduced flex for the tag to ensure it takes minimal space
               Expanded(
-                flex: 2, // Give less flex to the tag
+                flex: 2,
                 child: Align(
-                  alignment: Alignment.bottomCenter, // Align tag to bottom
+                  alignment: Alignment.bottomCenter,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 6,
@@ -65,19 +109,19 @@ class ToolCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color:
                           tool.type == ToolType.offline
-                              ? Colors.green.shade100
-                              : Colors.orange.shade100,
+                              ? Colors.orange.shade100
+                              : Colors.green.shade100,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       tool.type == ToolType.offline ? 'Offline' : 'Online',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 7,
+                        fontSize: 9,
                         color:
                             tool.type == ToolType.offline
-                                ? Colors.green.shade800
-                                : Colors.orange.shade800,
+                                ? Colors.orange.shade800
+                                : Colors.green.shade800,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

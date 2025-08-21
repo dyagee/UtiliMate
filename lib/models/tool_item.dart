@@ -1,24 +1,22 @@
 // lib/models/tool_item.dart
 import 'package:flutter/material.dart';
 
-// Enum to distinguish between offline and web-based tools
-enum ToolType {
-  offline, // Native, works without internet (mostly)
-  online, // Requires internet, loads in WebView
-}
+enum ToolType { offline, online }
 
-/// A data model for representing a single tool in the app.
 class ToolItem {
-  final String name; // Display name of the tool
-  final IconData icon; // Material icon for the tool
-  final Widget screen; // The Flutter screen widget associated with this tool
-  final ToolType type; // Whether it's an offline (native) or web tool
-  final String helpContentKey; // Key to retrieve help content from AppConstants
+  final String name;
+  final IconData icon;
+  final Widget Function(BuildContext) screenBuilder;
+  // FIX: Added screenType property to store the Type of the screen
+  final Type screenType;
+  final ToolType type;
+  final String helpContentKey;
 
   const ToolItem({
     required this.name,
     required this.icon,
-    required this.screen,
+    required this.screenBuilder,
+    required this.screenType, // FIX: Updated constructor parameter
     required this.type,
     required this.helpContentKey,
   });

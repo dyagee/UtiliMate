@@ -1,17 +1,17 @@
 // lib/screens/file_browser_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
 import 'package:utilimate/widgets/loading_indicator.dart';
 import 'package:utilimate/widgets/confirmation_dialog.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/custom_button.dart';
-import 'package:path_provider/path_provider.dart'; // For app-specific directories
-import 'package:permission_handler/permission_handler.dart'; // For storage permissions
-import 'package:android_path_provider/android_path_provider.dart'; // For Android public paths
-import 'package:open_filex/open_filex.dart'; // To open files
-import 'package:share_plus/share_plus.dart'; // Correct import for SharePlus
-import 'dart:developer' as developer; // For logging
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:android_path_provider/android_path_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:developer' as developer;
 
 class FileBrowserScreen extends StatefulWidget {
   const FileBrowserScreen({super.key});
@@ -23,7 +23,9 @@ class FileBrowserScreen extends StatefulWidget {
 class _FileBrowserScreenState extends State<FileBrowserScreen> {
   List<FileSystemEntity> _files = [];
   bool _isLoading = false;
-  String? _permissionError; // To show permission related errors
+  String? _permissionError;
+
+  static const String _utilimateFileSuffix = '_utilimate';
 
   @override
   void initState() {
@@ -42,14 +44,31 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
     }
   }
 
+  // Helper to get base name (without extension)
+  String _getBaseName(String fileName) {
+    int dotIndex = fileName.lastIndexOf('.');
+    if (dotIndex != -1 && dotIndex > 0) {
+      return fileName.substring(0, dotIndex);
+    }
+    return fileName;
+  }
+
+  // Helper to get extension (without dot)
+  String? _getExtension(String fileName) {
+    int dotIndex = fileName.lastIndexOf('.');
+    if (dotIndex != -1 && dotIndex > 0) {
+      return fileName.substring(dotIndex + 1);
+    }
+    return null;
+  }
+
   Future<void> _loadFiles() async {
     setState(() {
       _isLoading = true;
-      _permissionError = null; // Clear previous errors
+      _permissionError = null;
     });
 
     try {
-      // Request storage permission
       final status = await Permission.storage.request();
       if (!status.isGranted) {
         if (mounted) {
@@ -65,15 +84,8 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
 
       List<Directory> directoriesToScan = [];
 
-      // 1. App's private documents directory (for PDFs, etc., and iOS primary)
-      final appDocDir = await getApplicationDocumentsDirectory();
-      directoriesToScan.add(appDocDir);
-      developer.log('Scanning App Documents Dir: ${appDocDir.path}');
-
-      // 2. Android's public Downloads directory (FIX: Corrected API usage)
       if (Platform.isAndroid) {
         try {
-          // FIX: Corrected to getter downloadsPath as per documentation
           final downloadsPath = await AndroidPathProvider.downloadsPath;
           final downloadsDir = Directory(downloadsPath);
           if (await downloadsDir.exists()) {
@@ -82,7 +94,6 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
               'Scanning Android Public Downloads Dir: ${downloadsDir.path}',
             );
           } else {
-            // Optionally create if it doesn't exist, though system usually handles it
             await downloadsDir.create(recursive: true);
             directoriesToScan.add(downloadsDir);
             developer.log(
@@ -91,7 +102,6 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
           }
         } catch (e) {
           developer.log('Error getting Android Downloads directory: $e');
-          // Fallback or notify user if public downloads directory is inaccessible
           if (mounted) {
             _showSnackBar(
               'Could not access public downloads folder: ${e.toString()}',
@@ -99,29 +109,37 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
             );
           }
         }
+      } else if (Platform.isIOS) {
+        final appDocDir = await getApplicationDocumentsDirectory();
+        directoriesToScan.add(appDocDir);
+        developer.log('Scanning iOS App Documents Dir: ${appDocDir.path}');
       }
 
       List<FileSystemEntity> allFiles = [];
       for (var dir in directoriesToScan) {
         if (await dir.exists()) {
-          // List files non-recursively for top-level, or recursively if needed for subfolders
-          // Use whereType for cleaner filtering
           final List<File> dirFiles =
               dir.listSync(recursive: true).whereType<File>().toList();
           allFiles.addAll(dirFiles);
         }
       }
 
-      // Sort files by last modified date, newest first
-      allFiles.sort((a, b) {
+      final List<FileSystemEntity> utilimateFiles =
+          allFiles.where((file) {
+            final String fileName = file.path.split('/').last;
+            String baseName = _getBaseName(fileName);
+            return baseName.endsWith(_utilimateFileSuffix);
+          }).toList();
+
+      utilimateFiles.sort((a, b) {
         final statA = a.statSync();
         final statB = b.statSync();
-        return statB.modified.compareTo(statA.modified); // Newest first
+        return statB.modified.compareTo(statA.modified);
       });
 
       if (mounted) {
         setState(() {
-          _files = allFiles;
+          _files = utilimateFiles;
           _isLoading = false;
         });
       }
@@ -156,20 +174,15 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
     }
   }
 
-  Future<void> _renameFile(FileSystemEntity file) async {
-    final String oldFileName = file.path.split('/').last;
-    String? extension =
-        oldFileName.contains('.') ? oldFileName.split('.').last : null;
-    String baseName =
-        extension != null
-            ? oldFileName.substring(0, oldFileName.lastIndexOf('.'))
-            : oldFileName;
-
+  Future<String?> _showRenameDialog(
+    String initialBaseName,
+    String fullSuffixAndExtension,
+  ) async {
     TextEditingController nameController = TextEditingController(
-      text: baseName,
+      text: initialBaseName,
     );
 
-    String? newBaseName = await showDialog<String>(
+    return showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
@@ -179,7 +192,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
             controller: nameController,
             decoration: InputDecoration(
               hintText: 'Enter new file name',
-              suffixText: extension != null ? '.$extension' : '',
+              suffixText: fullSuffixAndExtension,
             ),
             autofocus: true,
             onSubmitted: (value) {
@@ -190,11 +203,11 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                Navigator.of(dialogContext).pop(null); // Return null on cancel
+                Navigator.of(dialogContext).pop(null);
               },
             ),
             TextButton(
-              child: const Text('Rename'),
+              child: const Text('Confirm'),
               onPressed: () {
                 Navigator.of(dialogContext).pop(nameController.text.trim());
               },
@@ -203,13 +216,48 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
         );
       },
     );
+  }
 
-    if (newBaseName != null &&
-        newBaseName.isNotEmpty &&
-        newBaseName != baseName) {
+  Future<void> _renameFile(FileSystemEntity file) async {
+    final String oldFileName = file.path.split('/').last;
+    String currentBaseName = _getBaseName(oldFileName);
+    String? currentExtension = _getExtension(oldFileName);
+
+    if (currentBaseName.endsWith(_utilimateFileSuffix)) {
+      currentBaseName = currentBaseName.substring(
+        0,
+        currentBaseName.length - _utilimateFileSuffix.length,
+      );
+    }
+
+    String fullSuffixText =
+        '$_utilimateFileSuffix${currentExtension != null ? '.$currentExtension' : ''}';
+    String? newBaseNameResult = await _showRenameDialog(
+      currentBaseName,
+      fullSuffixText,
+    );
+
+    if (newBaseNameResult != null && newBaseNameResult.isNotEmpty) {
+      String newBaseName = newBaseNameResult;
+
+      if (newBaseName.endsWith(_utilimateFileSuffix)) {
+        newBaseName = newBaseName.substring(
+          0,
+          newBaseName.length - _utilimateFileSuffix.length,
+        );
+      }
+      newBaseName = '$newBaseName$_utilimateFileSuffix';
+
       String newFileName = newBaseName;
-      if (extension != null) {
-        newFileName += '.$extension';
+      if (currentExtension != null) {
+        newFileName += '.$currentExtension';
+      }
+
+      if (newFileName == oldFileName) {
+        if (mounted) {
+          _showSnackBar('File name is the same.', isError: false);
+        }
+        return;
       }
 
       final String newPath = '${file.parent.path}/$newFileName';
@@ -218,7 +266,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
         if (mounted) {
           _showSnackBar('File renamed to $newFileName');
         }
-        _loadFiles(); // Reload files to show updated name
+        _loadFiles();
       } catch (e) {
         developer.log('Error renaming file: $e');
         if (mounted) {
@@ -228,10 +276,15 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
           );
         }
       }
+    } else {
+      if (mounted) {
+        _showSnackBar('Rename cancelled or new name is empty.', isError: false);
+      }
     }
   }
 
   Future<void> _deleteFile(FileSystemEntity file) async {
+    developer.log('Attempting to delete file: ${file.path}');
     bool? confirmDelete = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -240,37 +293,67 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
           title: 'Confirm Delete',
           message:
               'Are you sure you want to delete "${file.path.split('/').last}"?',
-          onConfirm: () => Navigator.of(dialogContext).pop(true),
+          onConfirm: () {
+            // FIX: Added log to confirm button press
+            developer.log('ConfirmationDialog: Confirm button pressed.');
+            Navigator.of(dialogContext).pop(true);
+          },
           confirmButtonText: 'Delete',
           confirmButtonColor: Colors.red,
-          onCancel: () => Navigator.of(dialogContext).pop(false),
+          onCancel: () {
+            // FIX: Added log to cancel button press
+            developer.log('ConfirmationDialog: Cancel button pressed.');
+            Navigator.of(dialogContext).pop(false);
+          },
           cancelButtonText: 'Cancel',
         );
       },
     );
 
+    // FIX: Log the exact value returned by showDialog
+    developer.log('showDialog for deletion returned: $confirmDelete');
+
     if (confirmDelete == true) {
+      developer.log('User confirmed deletion for: ${file.path}');
       try {
-        await file.delete();
-        if (mounted) {
-          _showSnackBar('File "${file.path.split('/').last}" deleted.');
+        if (await file.exists()) {
+          await file.delete(recursive: true);
+          developer.log('File deleted successfully: ${file.path}');
+          if (mounted) {
+            _showSnackBar('File "${file.path.split('/').last}" deleted.');
+          }
+          _loadFiles();
+        } else {
+          developer.log('File does not exist at path: ${file.path}');
+          if (mounted) {
+            _showSnackBar(
+              'File "${file.path.split('/').last}" not found. It might have been moved or deleted externally.',
+              isError: true,
+            );
+          }
         }
-        _loadFiles(); // Reload files after deletion
-      } catch (e) {
-        developer.log('Error deleting file: $e');
+      } catch (e, stackTrace) {
+        developer.log(
+          'Error deleting file: $e',
+          error: e,
+          stackTrace: stackTrace,
+        );
         if (mounted) {
           _showSnackBar(
-            'Failed to delete file: ${e.toString()}',
+            'Failed to delete file: ${e.toString()}. Please check app permissions or if the file is in use.',
             isError: true,
           );
         }
       }
+    } else {
+      developer.log(
+        'File deletion cancelled by user. Returned value: $confirmDelete',
+      );
     }
   }
 
   Future<void> _shareFile(String path) async {
     try {
-      // Correct SharePlus usage as per documentation
       final XFile file = XFile(path);
       await SharePlus.instance.share(
         ShareParams(files: [file], text: 'Sharing file from UtiliMate'),
@@ -283,7 +366,6 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
     }
   }
 
-  // Moved _getFileSize inside the state class
   String _getFileSize(String path) {
     try {
       final file = File(path);
@@ -300,7 +382,6 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
     }
   }
 
-  // Moved _getFileIcon inside the state class
   IconData _getFileIcon(String fileName) {
     final String lowerCaseFileName = fileName.toLowerCase();
     if (lowerCaseFileName.endsWith('.pdf')) {
@@ -324,37 +405,35 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
       return Icons.audio_file;
     } else if (lowerCaseFileName.endsWith('.doc') ||
         lowerCaseFileName.endsWith('.docx')) {
-      return Icons.description; // Word document
+      return Icons.description;
     } else if (lowerCaseFileName.endsWith('.xls') ||
         lowerCaseFileName.endsWith('.xlsx')) {
-      return Icons.table_chart; // Excel spreadsheet
+      return Icons.table_chart;
     } else if (lowerCaseFileName.endsWith('.ppt') ||
         lowerCaseFileName.endsWith('.pptx')) {
-      return Icons.slideshow; // PowerPoint presentation
+      return Icons.slideshow;
     } else if (lowerCaseFileName.endsWith('.zip') ||
         lowerCaseFileName.endsWith('.rar') ||
         lowerCaseFileName.endsWith('.7z')) {
-      return Icons.folder_zip; // Archive file
+      return Icons.folder_zip;
     } else if (lowerCaseFileName.endsWith('.txt')) {
-      return Icons.text_snippet; // Text file
+      return Icons.text_snippet;
     }
-    return Icons.insert_drive_file; // Default generic file icon
+    return Icons.insert_drive_file;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(
-        title: 'File Manager', // Displayed title
-        helpContentKey: 'FILE_MANAGEMENT_TOOL', // Still use this help key
+        title: 'File Manager',
+        helpContentKey: 'FILE_MANAGEMENT_TOOL',
         showBackButton: false,
       ),
       body: Stack(
         children: [
           _isLoading
-              ? const Center(
-                child: LoadingIndicator(),
-              ) // Use LoadingIndicator here
+              ? const Center(child: LoadingIndicator())
               : _permissionError != null
               ? Center(
                 child: Padding(
@@ -379,7 +458,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton.icon(
-                        onPressed: () => openAppSettings(), // Open app settings
+                        onPressed: () => openAppSettings(),
                         icon: const Icon(Icons.settings),
                         label: const Text('Open App Settings'),
                       ),
@@ -395,16 +474,14 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                     Icon(
                       Icons.folder_open,
                       size: 80,
-                      // Replaced withOpacity with withAlpha
                       color: Theme.of(
                         context,
                       ).colorScheme.onSurface.withAlpha((0.5 * 255).round()),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No files found yet.',
+                      'No UtiliMate files found yet.',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        // Replaced withOpacity with withAlpha
                         color: Theme.of(
                           context,
                         ).colorScheme.onSurface.withAlpha((0.7 * 255).round()),
@@ -412,9 +489,8 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Generated files and downloads will appear here.',
+                      'Generated files and downloads from UtiliMate will appear here.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        // Replaced withOpacity with withAlpha
                         color: Theme.of(
                           context,
                         ).colorScheme.onSurface.withAlpha((0.6 * 255).round()),
@@ -447,6 +523,19 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                     ).format(lastModified);
                     final String fileSize = _getFileSize(file.path);
 
+                    // Remove the UtiliMate suffix for display purposes
+                    String displayName = _getBaseName(fileName);
+                    if (displayName.endsWith(_utilimateFileSuffix)) {
+                      displayName = displayName.substring(
+                        0,
+                        displayName.length - _utilimateFileSuffix.length,
+                      );
+                    }
+                    String? displayExtension = _getExtension(fileName);
+                    if (displayExtension != null) {
+                      displayName += '.$displayExtension';
+                    }
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       elevation: 2,
@@ -459,12 +548,12 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                           vertical: 8,
                         ),
                         leading: Icon(
-                          _getFileIcon(fileName), // Use the new helper function
+                          _getFileIcon(fileName),
                           color: Theme.of(context).colorScheme.secondary,
                           size: 36,
                         ),
                         title: Text(
-                          fileName,
+                          displayName,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 2,
@@ -485,19 +574,13 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                                       context,
                                     ).colorScheme.onSurfaceVariant,
                               ),
-                              onPressed:
-                                  () => _renameFile(
-                                    file,
-                                  ), // Pass FileSystemEntity
+                              onPressed: () => _renameFile(file),
                               tooltip: 'Rename',
                             ),
                             IconButton(
                               icon: Icon(
                                 Icons.share,
-                                color:
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .primary, // Use primary color for share
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                               onPressed: () => _shareFile(file.path),
                               tooltip: 'Share',
@@ -507,10 +590,7 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                                 Icons.delete,
                                 color: Theme.of(context).colorScheme.error,
                               ),
-                              onPressed:
-                                  () => _deleteFile(
-                                    file,
-                                  ), // Pass FileSystemEntity
+                              onPressed: () => _deleteFile(file),
                               tooltip: 'Delete',
                             ),
                           ],
@@ -524,12 +604,12 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
         ],
       ),
       floatingActionButton:
-          _files.isNotEmpty || _permissionError != null
+          _files.isNotEmpty || _permissionError != null || _isLoading
               ? FloatingActionButton(
                 onPressed: _loadFiles,
                 child: const Icon(Icons.refresh),
               )
-              : null, // Only show FAB if files exist or there's a permission error
+              : null,
     );
   }
 }

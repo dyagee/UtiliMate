@@ -1,17 +1,16 @@
 // lib/screens/web_view_screen.dart
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:url_launcher/url_launcher.dart'; // Still imported for general external links
+import 'package:url_launcher/url_launcher.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
-import 'dart:developer' as developer; // For logging
-import 'package:path_provider/path_provider.dart'; // For getting download directory
-import 'package:permission_handler/permission_handler.dart'; // For storage permissions
-import 'dart:io'; // For Directory operations
-import 'package:http/http.dart'
-    as http; // For making HTTP requests to download files
-import 'dart:convert'; // For JSON encoding/decoding
-import 'package:flutter/services.dart'; // Required for MethodChannel
-import 'package:android_path_provider/android_path_provider.dart'; // For public Android paths
+import 'dart:developer' as developer;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter/services.dart';
+import 'package:android_path_provider/android_path_provider.dart';
 
 class WebViewScreen extends StatefulWidget {
   final String title;
@@ -32,11 +31,14 @@ class WebViewScreen extends StatefulWidget {
 class _WebViewScreenState extends State<WebViewScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
-  String _currentUrl = ''; // To track the current URL in the webview
-  double _downloadProgress = 0.0; // To show download progress
-  String _downloadFileName = ''; // To show current downloading file name
+  double _downloadProgress = 0.0;
+  String _downloadFileName = '';
 
-  // NEW: MethodChannel for native communication
+  static const String _utilimateFileSuffix = '_utilimate';
+
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason>?
+  _snackBarController;
+
   static const MethodChannel _channel = MethodChannel(
     'com.example.utilimate/media_scanner',
   );
@@ -44,12 +46,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   void initState() {
     super.initState();
-    _currentUrl = widget.url; // Initialize with the starting URL
 
     _controller =
         WebViewController()
           ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          // Add a JavaScript channel to receive messages from the webview
           ..addJavaScriptChannel(
             'FlutterDownloadChannel',
             onMessageReceived: (JavaScriptMessage message) {
@@ -59,10 +59,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 final String url = data['url'];
                 final String suggestedName =
                     data['suggestedName'] ?? 'download';
-                _startInternalDownload(
-                  url,
-                  suggestedName,
-                ); // Pass suggested name
+                _startInternalDownload(url, suggestedName);
               } catch (e) {
                 developer.log(
                   'Error decoding JS message: $e, Message: ${message.message}',
@@ -81,7 +78,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
           ..setNavigationDelegate(
             NavigationDelegate(
               onProgress: (int progress) {
-                // Update loading status
                 if (mounted) {
                   setState(() {
                     _isLoading = progress < 100;
@@ -93,8 +89,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 if (mounted) {
                   setState(() {
                     _isLoading = true;
-                    _currentUrl =
-                        url; // Update current URL when page starts loading
                   });
                 }
               },
@@ -103,11 +97,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 if (mounted) {
                   setState(() {
                     _isLoading = false;
-                    _currentUrl =
-                        url; // Update current URL when page finishes loading
                   });
                 }
-                // Inject JavaScript after page finishes loading
                 _injectJavaScript();
               },
               onWebResourceError: (WebResourceError error) {
@@ -115,12 +106,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
                   'WebView: Web resource error: ${error.description}, URL: ${error.url}',
                 );
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error loading page: ${error.description}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
                   setState(() {
                     _isLoading = false;
                   });
@@ -130,10 +115,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 developer.log('WebView: Navigation request: ${request.url}');
                 final uri = Uri.parse(request.url);
 
-                // --- Handling for other external links (e.g., ads, social media shares, new tabs) ---
-                // If the request is not for the main frame (e.g., pop-up, ad) and not from the original host
-                // or if it's a new window request (target="_blank" like behavior)
-                // Also, if the URL's host is different from the initial widget.url's host, launch externally.
                 if (!request.isMainFrame ||
                     !uri.host.contains(Uri.parse(widget.url).host)) {
                   developer.log(
@@ -144,95 +125,105 @@ class _WebViewScreenState extends State<WebViewScreen> {
                     return NavigationDecision.prevent;
                   }
                 }
-
-                // Allow normal navigation within the WebView
                 return NavigationDecision.navigate;
               },
             ),
           )
           ..loadRequest(Uri.parse(widget.url));
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _snackBarController = ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Disclaimer: This online tool is provided by a third-party website. UtiliMate does not control its content or data handling.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.blueGrey,
+            duration: const Duration(days: 365),
+            showCloseIcon: true,
+            closeIconColor: Colors.white,
+          ),
+        );
+      }
+    });
   }
 
-  // JavaScript injection to intercept download links and send suggested name
+  @override
+  void dispose() {
+    developer.log(
+      'WebView: Disposing WebViewScreen, attempting to close SnackBar.',
+    );
+    _snackBarController?.close();
+    super.dispose();
+  }
+
   void _injectJavaScript() {
     _controller.runJavaScript('''
-      // Function to get a suggested filename from the URL
       function getSuggestedFileName(url) {
           if (!url) return 'download';
-          var path = url.split('/').pop().split('?')[0]; // Get last part of path, remove query params
-          if (path.length > 50) { // Limit length for readability
+          var path = url.split('/').pop().split('?')[0];
+          if (path.length > 50) {
               path = path.substring(0, 50) + '...';
           }
-          return decodeURIComponent(path.replace(/[^a-zA-Z0-9.\\-_]/g, '_')); // Sanitize filename
+          return decodeURIComponent(path.replace(/[^a-zA-Z0-9.\\-_]/g, '_'));
       }
 
-      // Override window.open to send URLs to Flutter
       var originalWindowOpen = window.open;
       window.open = function(url, name, features) {
-          if (url && url.startsWith('http')) { // Only intercept http/https URLs
+          if (url && url.startsWith('http')) {
               var suggestedName = getSuggestedFileName(url);
               FlutterDownloadChannel.postMessage(JSON.stringify({url: url, suggestedName: suggestedName}));
-              return null; // Prevent the default window.open behavior
+              return null;
           }
           return originalWindowOpen(url, name, features);
       };
 
-      // Function to check if a URL looks like a download
       function isDownloadUrl(url) {
           if (!url) return false;
           var path = url.toLowerCase();
           return path.endsWith('.mp4') ||
-                 path.endsWith('.mov') ||
-                 path.endsWith('.avi') ||
-                 path.endsWith('.mkv') ||
-                 path.endsWith('.webm') ||
-                 path.endsWith('.mp3') ||
-                 path.endsWith('.wav') ||
-                 path.endsWith('.zip') ||
-                 path.endsWith('.rar') ||
-                 path.endsWith('.pdf') ||
-                 path.endsWith('.doc') || path.endsWith('.docx') ||
-                 path.endsWith('.xls') || path.endsWith('.xlsx') ||
-                 path.endsWith('.ppt') || path.endsWith('.pptx');
+                         path.endsWith('.mov') ||
+                         path.endsWith('.avi') ||
+                         path.endsWith('.mkv') ||
+                         path.endsWith('.webm') ||
+                         path.endsWith('.mp3') ||
+                         path.endsWith('.wav') ||
+                         path.endsWith('.zip') ||
+                         path.endsWith('.rar') ||
+                         path.endsWith('.pdf') ||
+                         path.endsWith('.doc') || path.endsWith('.docx') ||
+                         path.endsWith('.xls') || path.endsWith('.xlsx') ||
+                         path.endsWith('.ppt') || path.endsWith('.pptx');
       }
 
-      // Intercept clicks on anchor tags
       document.addEventListener('click', function(event) {
           var target = event.target;
-          // Traverse up the DOM to find an anchor tag
           while (target && target.tagName !== 'A') {
               target = target.parentNode;
           }
 
           if (target && target.tagName === 'A') {
               var href = target.href;
-              // Check if it's a download link or an external link
               if (isDownloadUrl(href) || (href && !href.startsWith(window.location.origin))) {
-                  var suggestedName = target.innerText.trim(); // Try inner text first
+                  var suggestedName = target.innerText.trim();
                   if (!suggestedName) {
                       suggestedName = getSuggestedFileName(this.href);
                   }
                   FlutterDownloadChannel.postMessage(JSON.stringify({url: href, suggestedName: suggestedName}));
-                  event.preventDefault(); // Prevent default navigation
-                  event.stopPropagation(); // Stop propagation
+                  event.preventDefault();
+                  event.stopPropagation();
               }
           }
-      }, true); // Use capture phase to ensure our listener runs first
+      }, true);
 
-      // --- Specific for savefrom.net or similar sites that give direct links ---
-      // This part tries to find direct download links on the page.
-      // It's a heuristic and might need adjustment for other websites.
-      // For savefrom.net, the download buttons usually have a specific structure.
-      // We'll look for common download link patterns.
-      setTimeout(function() { // Give page some time to render dynamic content
+      setTimeout(function() {
           var downloadLinks = document.querySelectorAll('a[download], a[href*=".mp4"], a[href*=".mov"], a[href*=".pdf"], a[href*=".zip"]');
           downloadLinks.forEach(function(link) {
-              // Check if the link is visible and looks like a primary download button
               if (link.offsetParent !== null && link.href && link.href.startsWith('http')) {
-                  // Add a click listener to the link to send its URL to Flutter
                   link.addEventListener('click', function(e) {
-                      e.preventDefault(); // Prevent default browser download
-                      var suggestedName = link.innerText.trim(); // Try inner text first
+                      e.preventDefault();
+                      var suggestedName = link.innerText.trim();
                       if (!suggestedName) {
                           suggestedName = getSuggestedFileName(this.href);
                       }
@@ -240,26 +231,67 @@ class _WebViewScreenState extends State<WebViewScreen> {
                   });
               }
           });
-      }, 2000); // Wait 2 seconds for dynamic content to load
+      }, 2000);
+
+      // Function to hide specified classes
+      function hideElements() {
+          var classesToHide = [
+              '.header',
+              '.main-form_watch_show',
+              '.main-form_watch',
+              '.link-plus',
+              '.norton',
+              '.wrapper.wrapper-after-output',
+              '.other',
+              '.smart-app-br.dh-top-banner',
+              '.f-nav-box-column.f-nav-container',
+              '.sf-apk-pro.extra' // This is the class we need to persistently hide
+          ];
+
+          classesToHide.forEach(function(className) {
+              var elements = document.querySelectorAll(className);
+              elements.forEach(function(element) {
+                  if (element) {
+                      element.style.display = 'none';
+                      // console.log('Hidden element with class: ' + className); // Uncomment for debugging
+                  }
+              });
+          });
+      }
+
+      // Run hideElements initially
+      hideElements();
+
+      // Set up a MutationObserver to watch for changes in the DOM
+      var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+              // If nodes were added, check if they match our classes and hide them
+              if (mutation.addedNodes.length > 0) {
+                  hideElements(); // Re-run hide logic for new elements
+              }
+          });
+      });
+
+      // Start observing the entire document body for subtree modifications
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      // Optional: Also run hideElements after a short delay for initial rendering
+      setTimeout(hideElements, 500);
     ''');
   }
 
-  // Method to show rename dialog
-  Future<String?> _showRenameDialog(String suggestedName) async {
+  // FIX: Modified _showRenameDialog to take initialBaseName and fullSuffixAndExtension
+  Future<String?> _showRenameDialog(
+    String initialBaseName,
+    String fullSuffixAndExtension,
+  ) async {
     TextEditingController nameController = TextEditingController(
-      text: suggestedName,
+      text: initialBaseName,
     );
-    String? extension =
-        suggestedName.contains('.') ? suggestedName.split('.').last : null;
-    String baseName =
-        extension != null
-            ? suggestedName.substring(0, suggestedName.lastIndexOf('.'))
-            : suggestedName;
-    nameController.text = baseName; // Pre-fill with base name
 
     return showDialog<String>(
       context: context,
-      barrierDismissible: false, // User must choose
+      barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Rename File'),
@@ -267,7 +299,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
             controller: nameController,
             decoration: InputDecoration(
               hintText: 'Enter new file name',
-              suffixText: extension != null ? '.$extension' : '',
+              suffixText:
+                  fullSuffixAndExtension, // Display the full suffix and extension
             ),
             autofocus: true,
             onSubmitted: (value) {
@@ -278,11 +311,13 @@ class _WebViewScreenState extends State<WebViewScreen> {
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                Navigator.of(dialogContext).pop(null); // Return null on cancel
+                Navigator.of(dialogContext).pop(null);
               },
             ),
             TextButton(
-              child: const Text('Download'),
+              child: const Text(
+                'Confirm',
+              ), // Changed from 'Download' to 'Confirm' for reusability
               onPressed: () {
                 Navigator.of(dialogContext).pop(nameController.text.trim());
               },
@@ -293,17 +328,31 @@ class _WebViewScreenState extends State<WebViewScreen> {
     );
   }
 
-  // Method to start internal download using http package
   void _startInternalDownload(String url, String suggestedName) async {
     developer.log(
       'Attempting internal download for: $url with suggested name: $suggestedName',
     );
     if (!mounted) return;
 
-    // Show rename dialog
-    String? userChosenName = await _showRenameDialog(suggestedName);
+    // Split suggestedName into base and extension
+    String baseName = suggestedName;
+    String extension = '';
+    int dotIndex = suggestedName.lastIndexOf('.');
+    if (dotIndex != -1 && dotIndex > 0) {
+      baseName = suggestedName.substring(0, dotIndex);
+      extension = suggestedName.substring(
+        dotIndex,
+      ); // Includes the dot, e.g., ".pdf"
+    }
 
-    if (userChosenName == null || userChosenName.isEmpty) {
+    // FIX: Pass only the baseName to the dialog, and construct the full suffix text
+    String fullSuffixText = '$_utilimateFileSuffix$extension';
+    String? userChosenBaseNameResult = await _showRenameDialog(
+      baseName,
+      fullSuffixText,
+    );
+
+    if (userChosenBaseNameResult == null || userChosenBaseNameResult.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -316,19 +365,13 @@ class _WebViewScreenState extends State<WebViewScreen> {
       return;
     }
 
-    // Extract original extension from the URL if not present in userChosenName
-    String originalExtension = '';
-    Uri uri = Uri.parse(url);
-    if (uri.path.contains('.')) {
-      originalExtension = uri.path.split('.').last.split('?').first;
-    }
+    String userChosenBaseName = userChosenBaseNameResult;
 
-    // Append extension if user didn't provide one
-    if (!userChosenName.contains('.') && originalExtension.isNotEmpty) {
-      _downloadFileName = '$userChosenName.$originalExtension';
-    } else {
-      _downloadFileName = userChosenName;
-    }
+    // FIX: Construct the final download filename by adding the suffix and extension
+    String finalDownloadFileName =
+        '$userChosenBaseName$_utilimateFileSuffix$extension';
+
+    _downloadFileName = finalDownloadFileName;
 
     setState(() {
       _downloadProgress = 0.0;
@@ -340,10 +383,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
       );
     });
 
-    String? filePath; // Declare filePath here to be accessible for media scan
+    String currentFilePath;
 
     try {
-      // Request storage permission (for older Android or general)
       final status = await Permission.storage.request();
       if (!status.isGranted) {
         if (mounted) {
@@ -360,10 +402,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
         return;
       }
 
-      // Determine download directory based on platform
       Directory? publicDownloadsDirectory;
       if (Platform.isAndroid) {
-        // FIX: Corrected to getter downloadsPath as per documentation
         publicDownloadsDirectory = Directory(
           await AndroidPathProvider.downloadsPath,
         );
@@ -371,7 +411,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
           'Android Public Downloads Dir: ${publicDownloadsDirectory.path}',
         );
       } else if (Platform.isIOS) {
-        // For iOS, app-specific documents are usually the closest to "public" for files you manage
         publicDownloadsDirectory = await getApplicationDocumentsDirectory();
         developer.log('iOS Documents Dir: ${publicDownloadsDirectory.path}');
       }
@@ -393,38 +432,31 @@ class _WebViewScreenState extends State<WebViewScreen> {
         return;
       }
 
-      // Ensure the directory exists
       if (!await publicDownloadsDirectory.exists()) {
         await publicDownloadsDirectory.create(recursive: true);
       }
 
-      filePath =
-          '${publicDownloadsDirectory.path}/$_downloadFileName'; // Assign to declared filePath
-      final File file = File(filePath);
+      currentFilePath = '${publicDownloadsDirectory.path}/$_downloadFileName';
 
-      // Handle duplicate file names: Append a number
       int counter = 1;
-      String baseFileNameWithoutExt =
-          _downloadFileName.contains('.')
-              ? _downloadFileName.substring(
-                0,
-                _downloadFileName.lastIndexOf('.'),
-              )
-              : _downloadFileName;
-      String ext =
-          _downloadFileName.contains('.')
-              ? _downloadFileName.substring(_downloadFileName.lastIndexOf('.'))
-              : '';
+      String baseNameForDuplicateCheck =
+          userChosenBaseName; // Use the base name from user input
 
-      String finalFileName = _downloadFileName;
-      String finalFilePath = filePath;
-
-      while (await File(finalFilePath).exists()) {
-        finalFileName = '$baseFileNameWithoutExt (${counter++})$ext';
-        finalFilePath = '${publicDownloadsDirectory.path}/$finalFileName';
+      // Ensure the suffix is removed from baseNameForDuplicateCheck if it was accidentally added by user
+      if (baseNameForDuplicateCheck.endsWith(_utilimateFileSuffix)) {
+        baseNameForDuplicateCheck = baseNameForDuplicateCheck.substring(
+          0,
+          baseNameForDuplicateCheck.length - _utilimateFileSuffix.length,
+        );
       }
-      _downloadFileName = finalFileName; // Update displayed name if duplicated
-      filePath = finalFilePath; // Update filePath
+
+      // Loop to find a unique filename/path, updating currentFilePath directly
+      while (await File(currentFilePath).exists()) {
+        String tempBaseName = '$baseNameForDuplicateCheck (${counter++})';
+        _downloadFileName =
+            '$tempBaseName$_utilimateFileSuffix$extension'; // Re-add suffix and original extension
+        currentFilePath = '${publicDownloadsDirectory.path}/$_downloadFileName';
+      }
 
       final request = http.Request('GET', Uri.parse(url));
       final response = await http.Client().send(request);
@@ -461,7 +493,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
           }
         },
         onDone: () async {
-          await file.writeAsBytes(bytes);
+          await File(currentFilePath).writeAsBytes(bytes);
           if (mounted) {
             setState(() {
               _downloadProgress = 1.0;
@@ -473,11 +505,14 @@ class _WebViewScreenState extends State<WebViewScreen> {
               ),
             );
 
-            // NEW: Trigger media scan for Android
-            if (Platform.isAndroid && filePath != null) {
+            if (Platform.isAndroid) {
               try {
-                await _channel.invokeMethod('scanFile', {'path': filePath});
-                developer.log('WebView: Triggered media scan for: $filePath');
+                await _channel.invokeMethod('scanFile', {
+                  'path': currentFilePath,
+                });
+                developer.log(
+                  'WebView: Triggered media scan for: $currentFilePath',
+                );
               } on PlatformException catch (e) {
                 developer.log(
                   'WebView: Failed to trigger media scan: ${e.message}',
@@ -486,7 +521,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
             }
           }
           developer.log(
-            'WebView: Successfully downloaded: $_downloadFileName to $filePath',
+            'WebView: Successfully downloaded: $_downloadFileName to $currentFilePath',
           );
         },
         onError: (e) {
@@ -516,7 +551,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
       developer.log('WebView: Unexpected download error: $e');
     } finally {
       setState(() {
-        _downloadProgress = 0.0; // Reset progress bar
+        _downloadProgress = 0.0;
         _downloadFileName = '';
       });
     }
@@ -533,7 +568,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
         children: [
           WebViewWidget(controller: _controller),
           if (_isLoading) const Center(child: CircularProgressIndicator()),
-          // Download Progress Indicator
           if (_downloadProgress > 0 && _downloadProgress < 1.0)
             Align(
               alignment: Alignment.topCenter,
@@ -558,19 +592,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 ),
               ),
             ),
-          // Optional: Display current URL for debugging/user info
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              color: Colors.black54,
-              child: Text(
-                _currentUrl,
-                style: const TextStyle(color: Colors.white, fontSize: 10),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
         ],
       ),
     );

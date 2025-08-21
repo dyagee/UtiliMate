@@ -1,4 +1,4 @@
-// lib/widgets/categories_modal_sheet.dart
+// lib/screens/categories_modal_sheet.dart
 import 'package:flutter/material.dart';
 import 'package:utilimate/utils/app_constants.dart';
 
@@ -7,105 +7,100 @@ class CategoriesModalSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // Use a fixed height or a fraction of screen height for the modal sheet.
-      // This is crucial for the Column inside to have bounded height.
-      height:
-          MediaQuery.of(context).size.height *
-          0.75, // Increased from 0.7 to 0.75
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        // Removed mainAxisSize: MainAxisSize.min
-        // The container's fixed height will constrain the column.
-        children: [
-          Align(
-            alignment: Alignment.center,
-            child: Container(
-              width: 40,
-              height: 5,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurfaceVariant.withAlpha((0.3 * 255).round()),
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.3,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          Text(
-            'Tool Categories',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            // Expanded ensures GridView takes remaining space in the Column
-            child: GridView.builder(
-              // shrinkWrap: true, // Removed shrinkWrap as Expanded handles scrolling and sizing
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 12.0,
-                mainAxisSpacing: 12.0,
-                childAspectRatio:
-                    0.85, // Adjusted aspect ratio for better fit (increased vertical space)
-              ),
-              itemCount: AppConstants.toolCategories.length,
-              itemBuilder: (context, index) {
-                final category = AppConstants.toolCategories[index];
-                return Card(
-                  elevation: 4.0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.0),
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16.0),
-                    onTap: () {
-                      Navigator.pop(context); // Close the modal sheet
-                      // Navigate to the selected category screen
-                      Navigator.push(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Categories',
+                      style: Theme.of(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => category.screen,
-                        ),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(
-                            category.icon,
-                            size: 30,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            category.name,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines:
-                                4, // Allow up to 2 lines for category names
-                          ),
-                        ],
+                      ).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                // FIX: Changed ListView.builder to GridView.builder
+                child: GridView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16.0),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3, // At least 3 cards per row
+                    crossAxisSpacing: 16.0,
+                    mainAxisSpacing: 16.0,
+                    childAspectRatio:
+                        1.0, // Adjust as needed to make cards square or rectangular
                   ),
-                );
-              },
-            ),
+                  itemCount: AppConstants.toolCategories.length,
+                  itemBuilder: (context, index) {
+                    final category = AppConstants.toolCategories[index];
+                    return Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context); // Pop the modal sheet first
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: category.screenBuilder),
+                          );
+                        },
+                        child: Column(
+                          // Arrange icon and text vertically for grid item
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              category.icon,
+                              size: 36,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(height: 8),
+                            Flexible(
+                              // Use Flexible to prevent text overflow
+                              child: Text(
+                                category.name,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.labelLarge,
+                                overflow:
+                                    TextOverflow.ellipsis, // Handle long names
+                                maxLines: 2, // Allow up to 2 lines for names
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

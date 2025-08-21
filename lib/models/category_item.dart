@@ -1,15 +1,17 @@
+// lib/models/category_item.dart
 import 'package:flutter/material.dart';
 
-/// A data model for representing a tool category in the app.
 class CategoryItem {
-  final String name; // Display name of the category
-  final IconData icon; // Material icon for the category
-  final Widget
-  screen; // The Flutter screen widget associated with this category
+  final String name;
+  final IconData icon;
+  // This will be a builder for the category screen itself
+  final Widget Function(BuildContext) screenBuilder;
+  final String helpContentKey;
 
   const CategoryItem({
     required this.name,
     required this.icon,
-    required this.screen,
+    required this.screenBuilder,
+    required this.helpContentKey,
   });
 }

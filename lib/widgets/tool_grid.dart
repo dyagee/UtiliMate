@@ -1,13 +1,14 @@
 // lib/widgets/tool_grid.dart
 import 'package:flutter/material.dart';
-import 'package:utilimate/models/tool_item.dart';
-import 'package:utilimate/widgets/tool_card.dart';
+import 'package:utilimate/models/tool_item.dart'; // Ensure ToolItem is imported
+import 'package:utilimate/widgets/tool_card.dart'; // FIX: Import ToolCard
 
 class ToolGrid extends StatelessWidget {
   final List<ToolItem> tools;
-  final String? title; // Optional title for the grid/category
+  final Function(ToolItem)? onToolTap; // Optional callback for tapping a tool
+  final String? title; // Optional title for the grid itself
 
-  const ToolGrid({super.key, required this.tools, this.title});
+  const ToolGrid({super.key, required this.tools, this.onToolTap, this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -16,17 +17,12 @@ class ToolGrid extends StatelessWidget {
       children: [
         if (title != null)
           Padding(
-            padding: const EdgeInsets.only(
-              left: 16.0,
-              right: 16.0,
-              top: 16.0,
-              bottom: 8.0,
-            ),
+            padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 8.0),
             child: Text(
               title!,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -34,22 +30,27 @@ class ToolGrid extends StatelessWidget {
           child: GridView.builder(
             padding: const EdgeInsets.all(16.0),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3, // Changed to 3 items per row
-              crossAxisSpacing: 12.0, // Reduced spacing slightly
-              mainAxisSpacing: 12.0, // Reduced spacing slightly
-              childAspectRatio:
-                  0.75, // Adjusted for better fit with 3 items and smaller content
+              crossAxisCount: 2, // Adjust as needed for your layout
+              crossAxisSpacing: 16.0,
+              mainAxisSpacing: 16.0,
+              childAspectRatio: 1.0, // Adjust if cards are not square
             ),
             itemCount: tools.length,
             itemBuilder: (context, index) {
               final tool = tools[index];
               return ToolCard(
+                // FIX: Use the ToolCard widget
                 tool: tool,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => tool.screen),
-                  );
+                  if (onToolTap != null) {
+                    onToolTap!(tool);
+                  } else {
+                    // Default navigation if no custom callback is provided
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: tool.screenBuilder),
+                    );
+                  }
                 },
               );
             },

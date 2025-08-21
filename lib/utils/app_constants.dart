@@ -4,7 +4,7 @@ import 'package:utilimate/models/tool_item.dart';
 import 'package:utilimate/models/category_item.dart';
 import 'package:utilimate/screens/web_view_screen.dart';
 
-// Individual Native Tool Screens
+// Individual Native Tool Screens (KEEP THESE - these are the actual tools)
 // PDF Tools
 import 'package:utilimate/screens/pdf_tools/image_to_pdf_screen.dart';
 import 'package:utilimate/screens/pdf_tools/merge_pdf_screen.dart';
@@ -50,16 +50,8 @@ import 'package:utilimate/screens/time_tools/stopwatch_timer_screen.dart';
 // Color Tools
 import 'package:utilimate/screens/color_tools/color_picker_converter_screen.dart';
 
-// Category Screens (used in the modal sheet)
-import 'package:utilimate/screens/pdf_tools_category_screen.dart';
-import 'package:utilimate/screens/text_tools_category_screen.dart';
-import 'package:utilimate/screens/image_tools_category_screen.dart';
-import 'package:utilimate/screens/video_downloaders_category_screen.dart';
-import 'package:utilimate/screens/qr_barcode_tools_category_screen.dart';
-import 'package:utilimate/screens/calculators_category_screen.dart';
-import 'package:utilimate/screens/generators_category_screen.dart';
-import 'package:utilimate/screens/time_tools_category_screen.dart';
-import 'package:utilimate/screens/color_tools_category_screen.dart';
+// FIX: Import the new generic category screen
+import 'package:utilimate/screens/generic_category_screen.dart';
 
 class AppConstants {
   // Helper for 'All Tools' category help content
@@ -321,15 +313,15 @@ class AppConstants {
     **Stopwatch & Timer Help:**
     A versatile tool combining a stopwatch and a countdown timer.
     * **Stopwatch Tab:**
-        * **Start:** Begin timing.
-        * **Pause:** Temporarily stop the stopwatch.
-        * **Reset:** Clear the elapsed time and stop the stopwatch.
+    * **Start:** Begin timing.
+    * **Pause:** Temporarily stop the stopwatch.
+    * **Reset:** Clear the elapsed time and stop the stopwatch.
     * **Timer Tab:**
-        * **Set Timer:** Tap to choose a duration (hours and minutes) for the countdown.
-        * **Start:** Begin the countdown.
-        * **Pause:** Temporarily stop the timer.
-        * **Reset:** Return the timer to its initially set duration.
-        * An alert will notify you when the timer finishes.
+    * **Set Timer:** Tap to choose a duration (hours and minutes) for the countdown.
+    * **Start:** Begin the countdown.
+    * **Pause:** Temporarily stop the timer.
+    * **Reset:** Return the timer to its initially set duration.
+    * An alert will notify you when the timer finishes.
     ''',
     'COLOR_PICKER_CONVERTER_TOOL': '''
     **Color Picker & Converter Help:**
@@ -359,34 +351,37 @@ class AppConstants {
   };
 
   // --- All Tool Items List ---
-  // Removed 'const' keyword here
   static final List<ToolItem> allTools = [
     // PDF Tools (Offline)
     ToolItem(
       name: 'Image to PDF',
       icon: Icons.insert_photo,
-      screen: const ImageToPdfScreen(),
+      screenBuilder: (context) => const ImageToPdfScreen(),
+      screenType: ImageToPdfScreen,
       type: ToolType.offline,
       helpContentKey: 'IMAGE_TO_PDF',
     ),
     ToolItem(
       name: 'Merge PDFs',
       icon: Icons.merge_type,
-      screen: const MergePdfScreen(),
+      screenBuilder: (context) => const MergePdfScreen(),
+      screenType: MergePdfScreen,
       type: ToolType.offline,
       helpContentKey: 'MERGE_PDF',
     ),
     ToolItem(
       name: 'Split PDF',
       icon: Icons.call_split,
-      screen: const SplitPdfScreen(),
+      screenBuilder: (context) => const SplitPdfScreen(),
+      screenType: SplitPdfScreen,
       type: ToolType.offline,
       helpContentKey: 'SPLIT_PDF',
     ),
     ToolItem(
       name: 'Compress PDF',
       icon: Icons.compress,
-      screen: const CompressPdfScreen(),
+      screenBuilder: (context) => const CompressPdfScreen(),
+      screenType: CompressPdfScreen,
       type: ToolType.offline,
       helpContentKey: 'COMPRESS_PDF',
     ),
@@ -395,28 +390,32 @@ class AppConstants {
     ToolItem(
       name: 'OCR (Image to Text)',
       icon: Icons.text_fields,
-      screen: const OcrScreen(),
+      screenBuilder: (context) => const OcrScreen(),
+      screenType: OcrScreen,
       type: ToolType.offline,
       helpContentKey: 'OCR_TOOL',
     ),
     ToolItem(
       name: 'Password Generator',
       icon: Icons.vpn_key,
-      screen: const PasswordGeneratorScreen(),
+      screenBuilder: (context) => const PasswordGeneratorScreen(),
+      screenType: PasswordGeneratorScreen,
       type: ToolType.offline,
       helpContentKey: 'PASSWORD_GENERATOR',
     ),
     ToolItem(
       name: 'Text Manipulation',
       icon: Icons.wrap_text,
-      screen: const TextManipulationScreen(),
+      screenBuilder: (context) => const TextManipulationScreen(),
+      screenType: TextManipulationScreen,
       type: ToolType.offline,
       helpContentKey: 'TEXT_MANIPULATION',
     ),
     ToolItem(
       name: 'Find and Replace',
       icon: Icons.find_replace,
-      screen: const FindReplaceScreen(),
+      screenBuilder: (context) => const FindReplaceScreen(),
+      screenType: FindReplaceScreen,
       type: ToolType.offline,
       helpContentKey: 'FIND_REPLACE_TOOL',
     ),
@@ -425,21 +424,24 @@ class AppConstants {
     ToolItem(
       name: 'Image Resizer',
       icon: Icons.aspect_ratio,
-      screen: const ImageResizerScreen(),
+      screenBuilder: (context) => const ImageResizerScreen(),
+      screenType: ImageResizerScreen,
       type: ToolType.offline,
       helpContentKey: 'IMAGE_RESIZER',
     ),
     ToolItem(
       name: 'Image Cropper',
       icon: Icons.crop,
-      screen: const ImageCropperScreen(),
+      screenBuilder: (context) => const ImageCropperScreen(),
+      screenType: ImageCropperScreen,
       type: ToolType.offline,
       helpContentKey: 'IMAGE_CROPPER',
     ),
     ToolItem(
       name: 'Image Format Converter',
       icon: Icons.compare_arrows,
-      screen: const ImageFormatConverterScreen(),
+      screenBuilder: (context) => const ImageFormatConverterScreen(),
+      screenType: ImageFormatConverterScreen,
       type: ToolType.offline,
       helpContentKey: 'IMAGE_FORMAT_CONVERTER',
     ),
@@ -448,7 +450,8 @@ class AppConstants {
     ToolItem(
       name: 'Unit Converter',
       icon: Icons.straighten,
-      screen: const UnitConverterScreen(),
+      screenBuilder: (context) => const UnitConverterScreen(),
+      screenType: UnitConverterScreen,
       type: ToolType.offline,
       helpContentKey: 'UNIT_CONVERTER_TOOL',
     ),
@@ -457,14 +460,16 @@ class AppConstants {
     ToolItem(
       name: 'QR Code Generator',
       icon: Icons.qr_code,
-      screen: const QrGeneratorScreen(),
+      screenBuilder: (context) => const QrGeneratorScreen(),
+      screenType: QrGeneratorScreen,
       type: ToolType.offline,
       helpContentKey: 'QR_GENERATOR_TOOL',
     ),
     ToolItem(
       name: 'QR & Barcode Scanner',
       icon: Icons.qr_code_scanner,
-      screen: const QrScannerScreen(),
+      screenBuilder: (context) => const QrScannerScreen(),
+      screenType: QrScannerScreen,
       type: ToolType.offline,
       helpContentKey: 'QR_SCANNER_TOOL',
     ),
@@ -473,7 +478,8 @@ class AppConstants {
     ToolItem(
       name: 'Currency Converter',
       icon: Icons.currency_exchange,
-      screen: const CurrencyConverterScreen(),
+      screenBuilder: (context) => const CurrencyConverterScreen(),
+      screenType: CurrencyConverterScreen,
       type: ToolType.online,
       helpContentKey: 'CURRENCY_CONVERTER_TOOL',
     ),
@@ -482,21 +488,24 @@ class AppConstants {
     ToolItem(
       name: 'Age Calculator',
       icon: Icons.calendar_month,
-      screen: const AgeCalculatorScreen(),
+      screenBuilder: (context) => const AgeCalculatorScreen(),
+      screenType: AgeCalculatorScreen,
       type: ToolType.offline,
       helpContentKey: 'AGE_CALCULATOR_TOOL',
     ),
     ToolItem(
       name: 'Discount Calculator',
       icon: Icons.discount,
-      screen: const DiscountCalculatorScreen(),
+      screenBuilder: (context) => const DiscountCalculatorScreen(),
+      screenType: DiscountCalculatorScreen,
       type: ToolType.offline,
       helpContentKey: 'DISCOUNT_CALCULATOR_TOOL',
     ),
     ToolItem(
       name: 'BMI Calculator',
       icon: Icons.monitor_weight,
-      screen: const BmiCalculatorScreen(),
+      screenBuilder: (context) => const BmiCalculatorScreen(),
+      screenType: BmiCalculatorScreen,
       type: ToolType.offline,
       helpContentKey: 'BMI_CALCULATOR_TOOL',
     ),
@@ -505,35 +514,40 @@ class AppConstants {
     ToolItem(
       name: 'Fake Name Generator',
       icon: Icons.badge,
-      screen: const FakeNameGeneratorScreen(),
+      screenBuilder: (context) => const FakeNameGeneratorScreen(),
+      screenType: FakeNameGeneratorScreen,
       type: ToolType.offline,
       helpContentKey: 'FAKE_NAME_GENERATOR_TOOL',
     ),
     ToolItem(
       name: 'Random Text Generator',
       icon: Icons.text_snippet,
-      screen: const RandomTextGeneratorScreen(),
+      screenBuilder: (context) => const RandomTextGeneratorScreen(),
+      screenType: RandomTextGeneratorScreen,
       type: ToolType.offline,
       helpContentKey: 'RANDOM_TEXT_GENERATOR_TOOL',
     ),
     ToolItem(
       name: 'Fake Address Generator',
       icon: Icons.location_city,
-      screen: const FakeAddressGeneratorScreen(),
+      screenBuilder: (context) => const FakeAddressGeneratorScreen(),
+      screenType: FakeAddressGeneratorScreen,
       type: ToolType.offline,
       helpContentKey: 'FAKE_ADDRESS_GENERATOR_TOOL',
     ),
     ToolItem(
       name: 'Random Number Generator',
       icon: Icons.numbers,
-      screen: const RandomNumberGeneratorScreen(),
+      screenBuilder: (context) => const RandomNumberGeneratorScreen(),
+      screenType: RandomNumberGeneratorScreen,
       type: ToolType.offline,
       helpContentKey: 'RANDOM_NUMBER_GENERATOR_TOOL',
     ),
     ToolItem(
       name: 'Range Number Picker',
       icon: Icons.format_list_numbered,
-      screen: const RangeNumberPickerScreen(),
+      screenBuilder: (context) => const RangeNumberPickerScreen(),
+      screenType: RangeNumberPickerScreen,
       type: ToolType.offline,
       helpContentKey: 'RANGE_NUMBER_PICKER_TOOL',
     ),
@@ -542,7 +556,8 @@ class AppConstants {
     ToolItem(
       name: 'Stopwatch & Timer',
       icon: Icons.access_time,
-      screen: const StopwatchTimerScreen(),
+      screenBuilder: (context) => const StopwatchTimerScreen(),
+      screenType: StopwatchTimerScreen,
       type: ToolType.offline,
       helpContentKey: 'STOPWATCH_TIMER_TOOL',
     ),
@@ -551,7 +566,8 @@ class AppConstants {
     ToolItem(
       name: 'Color Picker & Converter',
       icon: Icons.color_lens,
-      screen: const ColorPickerConverterScreen(),
+      screenBuilder: (context) => const ColorPickerConverterScreen(),
+      screenType: ColorPickerConverterScreen,
       type: ToolType.offline,
       helpContentKey: 'COLOR_PICKER_CONVERTER_TOOL',
     ),
@@ -561,44 +577,52 @@ class AppConstants {
     ToolItem(
       name: 'Word to PDF',
       icon: Icons.description,
-      screen: const WebViewScreen(
-        title: 'Word to PDF Converter',
-        url: 'https://smallseotools.com/word-to-pdf/',
-        helpContentKey: 'WEB_WORD_TO_PDF',
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'Word to PDF Converter',
+            url: 'https://smallseotools.com/word-to-pdf/',
+            helpContentKey: 'WEB_WORD_TO_PDF',
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_WORD_TO_PDF',
     ),
     ToolItem(
       name: 'PDF to Word',
       icon: Icons.text_snippet,
-      screen: const WebViewScreen(
-        title: 'PDF to Word Converter',
-        url: 'https://smallseotools.com/pdf-to-word-converter/',
-        helpContentKey: 'WEB_PDF_TO_WORD',
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'PDF to Word Converter',
+            url: 'https://smallseotools.com/pdf-to-word-converter/',
+            helpContentKey: 'WEB_PDF_TO_WORD',
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_PDF_TO_WORD',
     ),
     ToolItem(
       name: 'PowerPoint to PDF',
       icon: Icons.slideshow,
-      screen: const WebViewScreen(
-        title: 'PowerPoint to PDF Converter',
-        url: 'https://smallseotools.com/powerpoint-to-pdf/',
-        helpContentKey: 'WEB_PPT_TO_PDF',
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'PowerPoint to PDF Converter',
+            url: 'https://smallseotools.com/powerpoint-to-pdf/',
+            helpContentKey: 'WEB_PPT_TO_PDF',
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_PPT_TO_PDF',
     ),
     ToolItem(
       name: 'Excel to PDF',
       icon: Icons.table_chart,
-      screen: const WebViewScreen(
-        title: 'Excel to PDF Converter',
-        url: 'https://smallseotools.com/excel-to-pdf/',
-        helpContentKey: 'WEB_EXCEL_TO_PDF',
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'Excel to PDF Converter',
+            url: 'https://smallseotools.com/excel-to-pdf/',
+            helpContentKey: 'WEB_EXCEL_TO_PDF',
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_EXCEL_TO_PDF',
     ),
@@ -607,22 +631,26 @@ class AppConstants {
     ToolItem(
       name: 'Crop Image',
       icon: Icons.crop_free,
-      screen: const WebViewScreen(
-        title: 'Crop Image Online',
-        url: 'https://smallseotools.com/crop-image/',
-        helpContentKey: 'WEB_CROP_IMAGE',
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'Crop Image Online',
+            url: 'https://smallseotools.com/crop-image/',
+            helpContentKey: 'WEB_CROP_IMAGE',
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_CROP_IMAGE',
     ),
     ToolItem(
       name: 'Image Compressor',
       icon: Icons.photo_size_select_large,
-      screen: const WebViewScreen(
-        title: 'Image Compressor Online',
-        url: 'https://smallseotools.com/image-compressor/',
-        helpContentKey: 'WEB_IMAGE_COMPRESSOR',
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'Image Compressor Online',
+            url: 'https://smallseotools.com/image-compressor/',
+            helpContentKey: 'WEB_IMAGE_COMPRESSOR',
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_IMAGE_COMPRESSOR',
     ),
@@ -631,22 +659,26 @@ class AppConstants {
     ToolItem(
       name: 'Website Screenshot',
       icon: Icons.web_asset,
-      screen: const WebViewScreen(
-        title: 'Website Screenshot Generator',
-        url: 'https://smallseotools.com/website-screenshot/',
-        helpContentKey: 'WEB_WEBSITE_SCREENSHOT',
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'Website Screenshot Generator',
+            url: 'https://smallseotools.com/website-screenshot/',
+            helpContentKey: 'WEB_WEBSITE_SCREENSHOT',
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_WEBSITE_SCREENSHOT',
     ),
     ToolItem(
       name: 'Favicon Generator',
       icon: Icons.star_border,
-      screen: const WebViewScreen(
-        title: 'Favicon Generator',
-        url: 'https://smallseotools.com/favicon-generator/',
-        helpContentKey: 'WEB_FAVICON_GENERATOR',
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'Favicon Generator',
+            url: 'https://smallseotools.com/favicon-generator/',
+            helpContentKey: 'WEB_FAVICON_GENERATOR',
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_FAVICON_GENERATOR',
     ),
@@ -655,12 +687,14 @@ class AppConstants {
     ToolItem(
       name: 'Universal Video Downloader',
       icon: Icons.download_for_offline,
-      screen: const WebViewScreen(
-        title: 'Universal Video Downloader',
-        url: 'https://en1.savefrom.net/', // Consolidated URL
-        helpContentKey:
-            'WEB_ANY_VIDEO_DOWNLOADER', // Re-using this general help key
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'Universal Video Downloader',
+            url: 'https://en1.savefrom.net/', // Consolidated URL
+            helpContentKey:
+                'WEB_ANY_VIDEO_DOWNLOADER', // Re-using this general help key
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_ANY_VIDEO_DOWNLOADER',
     ),
@@ -669,11 +703,13 @@ class AppConstants {
     ToolItem(
       name: 'Keyword Suggestion',
       icon: Icons.lightbulb_outline,
-      screen: const WebViewScreen(
-        title: 'Keyword Suggestion Tool',
-        url: 'https://smallseotools.com/keyword-suggestion-tool/',
-        helpContentKey: 'WEB_KEYWORD_SUGGESTION',
-      ),
+      screenBuilder:
+          (context) => const WebViewScreen(
+            title: 'Keyword Suggestion Tool',
+            url: 'https://smallseotools.com/keyword-suggestion-tool/',
+            helpContentKey: 'WEB_KEYWORD_SUGGESTION',
+          ),
+      screenType: WebViewScreen,
       type: ToolType.online,
       helpContentKey: 'WEB_KEYWORD_SUGGESTION',
     ),
@@ -684,10 +720,10 @@ class AppConstants {
       allTools
           .where(
             (tool) =>
-                tool.screen is ImageToPdfScreen ||
-                tool.screen is MergePdfScreen ||
-                tool.screen is SplitPdfScreen ||
-                tool.screen is CompressPdfScreen ||
+                tool.screenType == ImageToPdfScreen ||
+                tool.screenType == MergePdfScreen ||
+                tool.screenType == SplitPdfScreen ||
+                tool.screenType == CompressPdfScreen ||
                 (tool.type == ToolType.online &&
                     tool.helpContentKey.startsWith('WEB_') &&
                     tool.helpContentKey.contains('PDF')),
@@ -698,10 +734,10 @@ class AppConstants {
       allTools
           .where(
             (tool) =>
-                tool.screen is OcrScreen ||
-                tool.screen is PasswordGeneratorScreen ||
-                tool.screen is TextManipulationScreen ||
-                tool.screen is FindReplaceScreen,
+                tool.screenType == OcrScreen ||
+                tool.screenType == PasswordGeneratorScreen ||
+                tool.screenType == TextManipulationScreen ||
+                tool.screenType == FindReplaceScreen,
           )
           .toList();
 
@@ -709,9 +745,9 @@ class AppConstants {
       allTools
           .where(
             (tool) =>
-                tool.screen is ImageResizerScreen ||
-                tool.screen is ImageCropperScreen ||
-                tool.screen is ImageFormatConverterScreen ||
+                tool.screenType == ImageResizerScreen ||
+                tool.screenType == ImageCropperScreen ||
+                tool.screenType == ImageFormatConverterScreen ||
                 (tool.type == ToolType.online &&
                     (tool.helpContentKey == 'WEB_CROP_IMAGE' ||
                         tool.helpContentKey == 'WEB_IMAGE_COMPRESSOR')),
@@ -728,8 +764,8 @@ class AppConstants {
       allTools
           .where(
             (tool) =>
-                tool.screen is QrGeneratorScreen ||
-                tool.screen is QrScannerScreen,
+                tool.screenType == QrGeneratorScreen ||
+                tool.screenType == QrScannerScreen,
           )
           .toList();
 
@@ -738,100 +774,143 @@ class AppConstants {
       allTools
           .where(
             (tool) =>
-                tool.screen is AgeCalculatorScreen ||
-                tool.screen is DiscountCalculatorScreen ||
-                tool.screen is BmiCalculatorScreen,
+                tool.screenType == AgeCalculatorScreen ||
+                tool.screenType == DiscountCalculatorScreen ||
+                tool.screenType == BmiCalculatorScreen,
           )
           .toList();
 
-  // Helper to get Generator tools
   static List<ToolItem> getGeneratorsTools() =>
       allTools
           .where(
             (tool) =>
-                tool.screen is FakeNameGeneratorScreen ||
-                tool.screen is RandomTextGeneratorScreen ||
-                tool.screen is FakeAddressGeneratorScreen ||
-                tool.screen is RandomNumberGeneratorScreen ||
-                tool.screen is RangeNumberPickerScreen,
+                tool.screenType == FakeNameGeneratorScreen ||
+                tool.screenType == RandomTextGeneratorScreen ||
+                tool.screenType == FakeAddressGeneratorScreen ||
+                tool.screenType == RandomNumberGeneratorScreen ||
+                tool.screenType == RangeNumberPickerScreen,
           )
           .toList();
 
-  // Helper to get Time tools - Ensure this correctly filters for StopwatchTimerScreen
   static List<ToolItem> getTimeTools() =>
-      allTools.where((tool) => tool.screen is StopwatchTimerScreen).toList();
-
-  // Helper to get Color tools - Ensure this correctly filters for ColorPickerConverterScreen
-  static List<ToolItem> getColorTools() =>
       allTools
-          .where((tool) => tool.screen is ColorPickerConverterScreen)
+          .where((tool) => tool.screenType == StopwatchTimerScreen)
           .toList();
 
-  // --- Categories for Modal Sheet ---
-  // Removed 'const' keyword here
+  static List<ToolItem> getColorTools() =>
+      allTools
+          .where((tool) => tool.screenType == ColorPickerConverterScreen)
+          .toList();
+
+  // Define toolCategories getter
   static final List<CategoryItem> toolCategories = [
     CategoryItem(
       name: 'PDF Tools',
       icon: Icons.picture_as_pdf,
-      screen: const PdfToolsCategoryScreen(),
+      screenBuilder:
+          (context) => GenericCategoryScreen(
+            // FIX: Use GenericCategoryScreen
+            title: 'PDF Tools',
+            tools: getPdfTools(),
+            categoryHelpContentKey: 'PDF_TOOLS_CATEGORY',
+          ),
+      helpContentKey: 'PDF_TOOLS_CATEGORY',
     ),
     CategoryItem(
       name: 'Text Tools',
       icon: Icons.text_fields,
-      screen: const TextToolsCategoryScreen(),
+      screenBuilder:
+          (context) => GenericCategoryScreen(
+            // FIX: Use GenericCategoryScreen
+            title: 'Text Tools',
+            tools: getTextTools(),
+            categoryHelpContentKey: 'TEXT_TOOLS_CATEGORY',
+          ),
+      helpContentKey: 'TEXT_TOOLS_CATEGORY',
     ),
     CategoryItem(
       name: 'Image Tools',
       icon: Icons.image,
-      screen: const ImageToolsCategoryScreen(),
+      screenBuilder:
+          (context) => GenericCategoryScreen(
+            // FIX: Use GenericCategoryScreen
+            title: 'Image Tools',
+            tools: getImageTools(),
+            categoryHelpContentKey: 'IMAGE_TOOLS_CATEGORY',
+          ),
+      helpContentKey: 'IMAGE_TOOLS_CATEGORY',
     ),
     CategoryItem(
       name: 'Video Downloaders',
-      icon: Icons.video_collection,
-      screen: const VideoDownloadersCategoryScreen(),
+      icon: Icons.video_library,
+      screenBuilder:
+          (context) => GenericCategoryScreen(
+            // FIX: Use GenericCategoryScreen
+            title: 'Video Downloaders',
+            tools: getVideoDownloaders(),
+            categoryHelpContentKey: 'VIDEO_DOWNLOADERS_CATEGORY',
+          ),
+      helpContentKey: 'VIDEO_DOWNLOADERS_CATEGORY',
     ),
     CategoryItem(
-      name: 'QR & Barcode',
+      name: 'QR & Barcode Tools',
       icon: Icons.qr_code_scanner,
-      screen: const QrBarcodeToolsCategoryScreen(),
-    ),
-    CategoryItem(
-      name: 'Unit Converter',
-      icon: Icons.straighten,
-      screen: const UnitConverterScreen(),
-    ),
-    CategoryItem(
-      name: 'Currency Converter',
-      icon: Icons.currency_exchange,
-      screen: const CurrencyConverterScreen(),
+      screenBuilder:
+          (context) => GenericCategoryScreen(
+            // FIX: Use GenericCategoryScreen
+            title: 'QR & Barcode Tools',
+            tools: getQrBarcodeTools(),
+            categoryHelpContentKey: 'QR_BARCODE_TOOLS_CATEGORY',
+          ),
+      helpContentKey: 'QR_BARCODE_TOOLS_CATEGORY',
     ),
     CategoryItem(
       name: 'Calculators',
       icon: Icons.calculate,
-      screen: const CalculatorsCategoryScreen(),
+      screenBuilder:
+          (context) => GenericCategoryScreen(
+            // FIX: Use GenericCategoryScreen
+            title: 'Calculators',
+            tools: getCalculatorTools(),
+            categoryHelpContentKey: 'CALCULATORS_CATEGORY',
+          ),
+      helpContentKey: 'CALCULATORS_CATEGORY',
     ),
     CategoryItem(
       name: 'Generators',
       icon: Icons.auto_awesome,
-      screen: const GeneratorsCategoryScreen(),
+      screenBuilder:
+          (context) => GenericCategoryScreen(
+            // FIX: Use GenericCategoryScreen
+            title: 'Generators',
+            tools: getGeneratorsTools(),
+            categoryHelpContentKey: 'GENERATORS_CATEGORY',
+          ),
+      helpContentKey: 'GENERATORS_CATEGORY',
     ),
-    // Ensure Time Tools category is explicitly added here and references the correct screen
     CategoryItem(
       name: 'Time Tools',
       icon: Icons.access_time,
-      screen: const TimeToolsCategoryScreen(),
+      screenBuilder:
+          (context) => GenericCategoryScreen(
+            // FIX: Use GenericCategoryScreen
+            title: 'Time Tools',
+            tools: getTimeTools(),
+            categoryHelpContentKey: 'TIME_TOOLS_CATEGORY',
+          ),
+      helpContentKey: 'TIME_TOOLS_CATEGORY',
     ),
-    // Ensure Color Tools category is explicitly added here and references the correct screen
     CategoryItem(
       name: 'Color Tools',
       icon: Icons.color_lens,
-      screen: const ColorToolsCategoryScreen(),
+      screenBuilder:
+          (context) => GenericCategoryScreen(
+            // FIX: Use GenericCategoryScreen
+            title: 'Color Tools',
+            tools: getColorTools(),
+            categoryHelpContentKey: 'COLOR_TOOLS_CATEGORY',
+          ),
+      helpContentKey: 'COLOR_TOOLS_CATEGORY',
     ),
-    // REMOVED: File Manager should not be in categories as it's a bottom nav item.
-    // CategoryItem(
-    //   name: 'File Manager',
-    //   icon: Icons.folder_open,
-    //   screen: const FileBrowserScreen(),
-    // ),
   ];
 }

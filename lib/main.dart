@@ -6,9 +6,18 @@ import 'package:utilimate/services/theme_service.dart';
 import 'package:utilimate/screens/file_browser_screen.dart';
 import 'package:utilimate/screens/settings_screen.dart';
 import 'package:utilimate/widgets/categories_modal_sheet.dart';
+import 'package:utilimate/services/connectivity_service.dart'; // Import the new service
+import 'dart:developer' as developer; // For logging
+
+// Define a global key for the navigator state
+// This is crucial for showing SnackBars from anywhere in the app
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Initialize the ConnectivityService right at the start of the app.
+  // This will begin listening for connectivity changes immediately.
+  ConnectivityService();
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeService(),
@@ -25,6 +34,9 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeService>(
       builder: (context, themeService, child) {
         return MaterialApp(
+          // Provide the navigatorKey to MaterialApp. This allows global access
+          // to the NavigatorState and ScaffoldMessenger for showing SnackBars.
+          navigatorKey: navigatorKey,
           title: 'UtiliMate',
           theme: themeService.getThemeData(context),
           home: const MainAppScaffold(),
@@ -46,14 +58,12 @@ class MainAppScaffold extends StatefulWidget {
 class _MainAppScaffoldState extends State<MainAppScaffold> {
   int _selectedIndex = 0;
   late PageController _pageController;
+  late final ConnectivityService _connectivityService; // Declare the service
 
   // Define the list of main screens for the PageView
-  // Note: Category screens are NOT directly in PageView anymore,
-  // they are navigated to from the modal sheet.
   final List<Widget> _screens = const [
     HomeScreen(), // All Tools
-    // Placeholder for Categories tab - it will trigger a modal, not a page view
-    SizedBox(), // This index will be used for the modal sheet
+    SizedBox(), // This index will be used for the modal sheet (Categories)
     FileBrowserScreen(),
     SettingsScreen(),
   ];
@@ -62,11 +72,24 @@ class _MainAppScaffoldState extends State<MainAppScaffold> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
+    _connectivityService = ConnectivityService(); // Get the singleton instance
+
+    // You can optionally listen for connectivity changes here if you want
+    // to update UI elements within MainAppScaffold based on connectivity.
+    // However, the SnackBar alerts are handled internally by ConnectivityService.
+    _connectivityService.onConnectivityChange.listen((isConnected) {
+      developer.log('MainAppScaffold: Connectivity changed to $isConnected');
+      // No setState here, as SnackBar is handled globally by the service.
+      // Add any scaffold-level UI changes here if necessary.
+    });
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    // No need to dispose _connectivityService here, as it's a global singleton
+    // managed at the application level. Its dispose method is called only when
+    // the entire application is shutting down, which is not managed by a Widget's dispose.
     super.dispose();
   }
 
