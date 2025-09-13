@@ -59,7 +59,7 @@ class AppConstants {
     **All Tools Help:**
     This section provides a comprehensive list of all utility tools available in UtiliMate.
     * **Offline Tools:** These tools work directly on your device and do not require an internet connection (unless for specific functionalities like OCR's initial model download).
-    * **Online Tools:** These tools are accessed via external websites (e.g., smallseotools.com) and require an active internet connection. File handling for online tools occurs outside the app's direct control.
+    * **Online Tools:** These tools are accessed via external websites/APIs and require an active internet connection. File handling for online tools occurs outside the app's direct control.
     Tap on any tool card to navigate to its dedicated screen and start using it!
     ''';
 
@@ -167,76 +167,16 @@ class AppConstants {
     ''',
     'WEB_TOOLS_CATEGORY': '''
     **Online Tools Category Help:**
-    This section provides access to various utility tools hosted on external websites (e.g., smallseotools.com).
+    This section provides access to various utility tools hosted on external websites/APIs.
     **External Content:** Please note that these tools are provided by third-party websites. UtiliMate does not control their content, advertisements, or data handling.
     **File Downloads:** When using these online tools, any file uploads or downloads will be handled by the website and your device's browser, not directly by UtiliMate's internal file management.
     **Internet Connection Required:** An active internet connection is necessary to use these online tools.
-    ''',
-    'WEB_WORD_TO_PDF': '''
-    **Word to PDF Converter (Online Tool) Help:**
-    * **Upload Word File:** On the web page, you will find an option to upload your Word document (.docx).
-    * **Convert:** Follow the website's instructions to initiate the conversion.
-    * **Download PDF:** Once converted, the website will provide a link to download the resulting PDF file. This download will be handled by your device's browser.
-    ''',
-    'WEB_PDF_TO_WORD': '''
-    **PDF to Word Converter (Online Tool) Help:**
-    * **Upload PDF File:** On the web page, upload your PDF document.
-    * **Convert:** Follow the website's instructions to convert the PDF to an editable Word document.
-    * **Download Word File:** The website will provide a link to download the converted Word file (.docx). This download will be handled by your device's browser.
-    ''',
-    'WEB_PPT_TO_PDF': '''
-    **PowerPoint to PDF Converter (Online Tool) Help:**
-    * **Upload PowerPoint File:** On the web page, upload your PowerPoint presentation (.pptx).
-    * **Convert:** Follow the website's instructions to convert the presentation to PDF.
-    * **Download PDF:** The website will provide a link to download the resulting PDF. This download will be handled by your device's browser.
-    ''',
-    'WEB_EXCEL_TO_PDF': '''
-    **Excel to PDF Converter (Online Tool) Help:**
-    * **Upload Excel File:** On the web page, upload your Excel spreadsheet (.xlsx).
-    * **Convert:** Follow the website's instructions to convert the spreadsheet to PDF.
-    * **Download PDF:** The website will provide a link to download the resulting PDF. This download will be handled by your device's browser.
-    ''',
-    'WEB_CROP_IMAGE': '''
-    **Crop Image (Online Tool) Help:**
-    * **Upload Image:** On the web page, upload the image you wish to crop.
-    * **Crop:** Use the website's interface to select the desired cropping area.
-    * **Download Image:** Download the cropped image from the website.
-    ''',
-    'WEB_IMAGE_COMPRESSOR': '''
-    **Image Compressor (Online Tool) Help:**
-    * **Upload Image:** On the web page, upload the image you want to compress.
-    * **Compress:** Follow the website's instructions to compress the image.
-    * **Download Image:** Download the compressed image from the website.
-    ''',
-    'WEB_PHOTO_EDITOR': '''
-    **Online Photo Editor (Online Tool) Help:**
-    * **Upload Image:** On the web page, upload the image you want to edit.
-    * **Edit Tools:** Use the various editing tools provided by the website (e.g., crop, resize, filters).
-    * **Save/Download:** Once you're done editing, the website will provide options to save or download your modified image.
-    ''',
-    'WEB_WEBSITE_SCREENSHOT': '''
-    **Website Screenshot Generator (Online Tool) Help:**
-    * **Enter URL:** On the web page, enter the URL of the website you want to screenshot.
-    * **Generate:** Follow the website's instructions to generate the screenshot.
-    * **Download Screenshot:** Download the generated image.
-    ''',
-    'WEB_FAVICON_GENERATOR': '''
-    **Favicon Generator (Online Tool) Help:**
-    * **Upload Image:** On the web page, upload an image to use for your favicon.
-    * **Generate Favicon:** Follow the website's instructions to create the favicon.
-    * **Download Favicon:** Download the generated favicon file.
     ''',
     'WEB_ANY_VIDEO_DOWNLOADER': '''
     **Any Video Downloader (Online Tool) Help:**
     * **Paste Video URL:** On the web page, paste the URL of the video you want to download.
     * **Download:** Follow the website's instructions to initiate the download.
     * **Disclaimer:** Be aware of copyright and platform terms of service when downloading online content. UtiliMate does not endorse or facilitate unauthorized downloads. Download links will open in your device's default browser.
-    ''',
-    'WEB_KEYWORD_SUGGESTION': '''
-    **Keyword Suggestion Tool (Online Tool) Help:**
-    * **Enter Topic/Keyword:** On the web page, enter your initial topic or keyword.
-    * **Generate Suggestions:** Follow the website's instructions to get a list of related keyword suggestions.
-    * **Analyze/Copy:** Review the suggestions and copy the relevant ones for your use.
     ''',
     'CURRENCY_CONVERTER_TOOL': '''
     **Currency Converter Help:**
@@ -573,116 +513,6 @@ class AppConstants {
     ),
 
     // --- Online Tools ---
-    // Document Conversions (Online)
-    ToolItem(
-      name: 'Word to PDF',
-      icon: Icons.description,
-      screenBuilder:
-          (context) => const WebViewScreen(
-            title: 'Word to PDF Converter',
-            url: 'https://smallseotools.com/word-to-pdf/',
-            helpContentKey: 'WEB_WORD_TO_PDF',
-          ),
-      screenType: WebViewScreen,
-      type: ToolType.online,
-      helpContentKey: 'WEB_WORD_TO_PDF',
-    ),
-    ToolItem(
-      name: 'PDF to Word',
-      icon: Icons.text_snippet,
-      screenBuilder:
-          (context) => const WebViewScreen(
-            title: 'PDF to Word Converter',
-            url: 'https://smallseotools.com/pdf-to-word-converter/',
-            helpContentKey: 'WEB_PDF_TO_WORD',
-          ),
-      screenType: WebViewScreen,
-      type: ToolType.online,
-      helpContentKey: 'WEB_PDF_TO_WORD',
-    ),
-    ToolItem(
-      name: 'PowerPoint to PDF',
-      icon: Icons.slideshow,
-      screenBuilder:
-          (context) => const WebViewScreen(
-            title: 'PowerPoint to PDF Converter',
-            url: 'https://smallseotools.com/powerpoint-to-pdf/',
-            helpContentKey: 'WEB_PPT_TO_PDF',
-          ),
-      screenType: WebViewScreen,
-      type: ToolType.online,
-      helpContentKey: 'WEB_PPT_TO_PDF',
-    ),
-    ToolItem(
-      name: 'Excel to PDF',
-      icon: Icons.table_chart,
-      screenBuilder:
-          (context) => const WebViewScreen(
-            title: 'Excel to PDF Converter',
-            url: 'https://smallseotools.com/excel-to-pdf/',
-            helpContentKey: 'WEB_EXCEL_TO_PDF',
-          ),
-      screenType: WebViewScreen,
-      type: ToolType.online,
-      helpContentKey: 'WEB_EXCEL_TO_PDF',
-    ),
-
-    // Image Tools (Online)
-    ToolItem(
-      name: 'Crop Image',
-      icon: Icons.crop_free,
-      screenBuilder:
-          (context) => const WebViewScreen(
-            title: 'Crop Image Online',
-            url: 'https://smallseotools.com/crop-image/',
-            helpContentKey: 'WEB_CROP_IMAGE',
-          ),
-      screenType: WebViewScreen,
-      type: ToolType.online,
-      helpContentKey: 'WEB_CROP_IMAGE',
-    ),
-    ToolItem(
-      name: 'Image Compressor',
-      icon: Icons.photo_size_select_large,
-      screenBuilder:
-          (context) => const WebViewScreen(
-            title: 'Image Compressor Online',
-            url: 'https://smallseotools.com/image-compressor/',
-            helpContentKey: 'WEB_IMAGE_COMPRESSOR',
-          ),
-      screenType: WebViewScreen,
-      type: ToolType.online,
-      helpContentKey: 'WEB_IMAGE_COMPRESSOR',
-    ),
-
-    // Website Tools (Online)
-    ToolItem(
-      name: 'Website Screenshot',
-      icon: Icons.web_asset,
-      screenBuilder:
-          (context) => const WebViewScreen(
-            title: 'Website Screenshot Generator',
-            url: 'https://smallseotools.com/website-screenshot/',
-            helpContentKey: 'WEB_WEBSITE_SCREENSHOT',
-          ),
-      screenType: WebViewScreen,
-      type: ToolType.online,
-      helpContentKey: 'WEB_WEBSITE_SCREENSHOT',
-    ),
-    ToolItem(
-      name: 'Favicon Generator',
-      icon: Icons.star_border,
-      screenBuilder:
-          (context) => const WebViewScreen(
-            title: 'Favicon Generator',
-            url: 'https://smallseotools.com/favicon-generator/',
-            helpContentKey: 'WEB_FAVICON_GENERATOR',
-          ),
-      screenType: WebViewScreen,
-      type: ToolType.online,
-      helpContentKey: 'WEB_FAVICON_GENERATOR',
-    ),
-
     // Consolidated Video Downloader to SaveFrom.net
     ToolItem(
       name: 'Universal Video Downloader',
@@ -698,21 +528,6 @@ class AppConstants {
       type: ToolType.online,
       helpContentKey: 'WEB_ANY_VIDEO_DOWNLOADER',
     ),
-
-    // SEO Tools (Online)
-    ToolItem(
-      name: 'Keyword Suggestion',
-      icon: Icons.lightbulb_outline,
-      screenBuilder:
-          (context) => const WebViewScreen(
-            title: 'Keyword Suggestion Tool',
-            url: 'https://smallseotools.com/keyword-suggestion-tool/',
-            helpContentKey: 'WEB_KEYWORD_SUGGESTION',
-          ),
-      screenType: WebViewScreen,
-      type: ToolType.online,
-      helpContentKey: 'WEB_KEYWORD_SUGGESTION',
-    ),
   ];
 
   // Helper to get tools by type (for category screens)
@@ -723,10 +538,7 @@ class AppConstants {
                 tool.screenType == ImageToPdfScreen ||
                 tool.screenType == MergePdfScreen ||
                 tool.screenType == SplitPdfScreen ||
-                tool.screenType == CompressPdfScreen ||
-                (tool.type == ToolType.online &&
-                    tool.helpContentKey.startsWith('WEB_') &&
-                    tool.helpContentKey.contains('PDF')),
+                tool.screenType == CompressPdfScreen,
           )
           .toList();
 
@@ -747,10 +559,7 @@ class AppConstants {
             (tool) =>
                 tool.screenType == ImageResizerScreen ||
                 tool.screenType == ImageCropperScreen ||
-                tool.screenType == ImageFormatConverterScreen ||
-                (tool.type == ToolType.online &&
-                    (tool.helpContentKey == 'WEB_CROP_IMAGE' ||
-                        tool.helpContentKey == 'WEB_IMAGE_COMPRESSOR')),
+                tool.screenType == ImageFormatConverterScreen,
           )
           .toList();
 
