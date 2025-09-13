@@ -1,6 +1,6 @@
 // lib/screens/time_tools/stopwatch_timer_screen.dart
 import 'package:flutter/material.dart';
-import 'dart:async'; // For Timer and Stream
+import 'package:stop_watch_timer/stop_watch_timer.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/custom_button.dart';
 
@@ -15,132 +15,131 @@ class _StopwatchTimerScreenState extends State<StopwatchTimerScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // --- Stopwatch Variables ---
-  final Stopwatch _stopwatch = Stopwatch(); // FIX: Made _stopwatch final
-  Timer? _stopwatchTimer;
-  String _stopwatchDisplay = '00:00:00.00';
-
-  // --- Timer Variables ---
-  Timer? _countdownTimer;
-  Duration _initialDuration = const Duration(minutes: 5); // Default 5 minutes
-  Duration _currentDuration = Duration.zero;
-  String _countdownDisplay = '00:00';
-  bool _isCountdownRunning = false;
+  final StopWatchTimer _stopWatchTimer = StopWatchTimer();
+  late final StopWatchTimer _countDownTimer;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _resetCountdown(); // Initialize countdown display
+    _countDownTimer = StopWatchTimer(
+      mode: StopWatchMode.countDown,
+      onEnded: () {
+        _showTimerFinishedDialog();
+      },
+    );
   }
 
   // --- Stopwatch Methods ---
   void _startStopwatch() {
-    _stopwatch.start();
-    _stopwatchTimer = Timer.periodic(const Duration(milliseconds: 10), (timer) {
-      if (mounted) {
-        setState(() {
-          _stopwatchDisplay = _formatDuration(_stopwatch.elapsed);
-        });
-      }
-    });
+    _stopWatchTimer.onStartTimer();
   }
 
   void _pauseStopwatch() {
-    _stopwatch.stop();
-    _stopwatchTimer?.cancel();
+    _stopWatchTimer.onStopTimer();
   }
 
   void _resetStopwatch() {
-    _stopwatch.reset();
-    _stopwatch.stop();
-    _stopwatchTimer?.cancel();
-    setState(() {
-      _stopwatchDisplay = '00:00:00.00';
-    });
+    _stopWatchTimer.onResetTimer();
   }
 
   // --- Timer Methods ---
   void _setTimerDuration() async {
-    final TimeOfDay? pickedTime = await showTimePicker(
+    int initialHours = _countDownTimer.rawTime.value ~/ (1000 * 60 * 60);
+    int initialMinutes = (_countDownTimer.rawTime.value ~/ (1000 * 60)) % 60;
+    int initialSeconds = (_countDownTimer.rawTime.value ~/ 1000) % 60;
+
+    final hoursController = TextEditingController(
+      text: initialHours.toString().padLeft(2, '0'),
+    );
+    final minutesController = TextEditingController(
+      text: initialMinutes.toString().padLeft(2, '0'),
+    );
+    final secondsController = TextEditingController(
+      text: initialSeconds.toString().padLeft(2, '0'),
+    );
+
+    if (_countDownTimer.rawTime.value == 0) {
+      minutesController.text = '05';
+    }
+
+    final result = await showDialog<bool>(
       context: context,
-      initialTime: TimeOfDay(
-        hour: _initialDuration.inHours,
-        minute: _initialDuration.inMinutes.remainder(60),
-      ),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).colorScheme.primary,
-              onPrimary: Theme.of(context).colorScheme.onPrimary,
-              onSurface: Theme.of(context).colorScheme.onSurface,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.primary,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Set Countdown Duration'),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              SizedBox(
+                width: 50,
+                child: TextField(
+                  controller: hoursController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(labelText: 'HH'),
+                ),
               ),
-            ),
+              const Text(':'),
+              SizedBox(
+                width: 50,
+                child: TextField(
+                  controller: minutesController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(labelText: 'MM'),
+                ),
+              ),
+              const Text(':'),
+              SizedBox(
+                width: 50,
+                child: TextField(
+                  controller: secondsController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(labelText: 'SS'),
+                ),
+              ),
+            ],
           ),
-          child: child!,
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Set'),
+            ),
+          ],
         );
       },
     );
 
-    if (pickedTime != null) {
-      setState(() {
-        _initialDuration = Duration(
-          hours: pickedTime.hour,
-          minutes: pickedTime.minute,
-        );
-        _currentDuration = _initialDuration;
-        _countdownDisplay = _formatDuration(_currentDuration);
-        _isCountdownRunning = false;
-        _countdownTimer?.cancel();
-      });
+    if (result == true) {
+      final hours = int.tryParse(hoursController.text) ?? 0;
+      final minutes = int.tryParse(minutesController.text) ?? 0;
+      final seconds = int.tryParse(secondsController.text) ?? 0;
+
+      if (hours >= 0 && minutes >= 0 && seconds >= 0) {
+        final totalMilliseconds =
+            (hours * 3600 + minutes * 60 + seconds) * 1000;
+        _countDownTimer.onResetTimer();
+        _countDownTimer.setPresetTime(mSec: totalMilliseconds);
+      }
     }
   }
 
   void _startCountdown() {
-    if (_currentDuration.inSeconds <= 0 && _initialDuration.inSeconds <= 0) {
-      // If no duration set yet, default to 5 minutes
-      _initialDuration = const Duration(minutes: 5);
-      _currentDuration = _initialDuration;
-    } else if (_currentDuration.inSeconds <= 0 &&
-        _initialDuration.inSeconds > 0) {
-      // If timer ran out, reset to initial duration before starting
-      _currentDuration = _initialDuration;
-    }
-
-    _isCountdownRunning = true;
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          if (_currentDuration.inSeconds > 0) {
-            _currentDuration = _currentDuration - const Duration(seconds: 1);
-            _countdownDisplay = _formatDuration(_currentDuration);
-          } else {
-            _countdownTimer?.cancel();
-            _isCountdownRunning = false;
-            _showTimerFinishedDialog();
-          }
-        });
-      }
-    });
+    _countDownTimer.onStartTimer();
   }
 
   void _pauseCountdown() {
-    _countdownTimer?.cancel();
-    _isCountdownRunning = false;
+    _countDownTimer.onStopTimer();
   }
 
   void _resetCountdown() {
-    _countdownTimer?.cancel();
-    _isCountdownRunning = false;
-    setState(() {
-      _currentDuration = _initialDuration;
-      _countdownDisplay = _formatDuration(_initialDuration);
-    });
+    _countDownTimer.onResetTimer();
   }
 
   void _showTimerFinishedDialog() {
@@ -154,51 +153,23 @@ class _StopwatchTimerScreenState extends State<StopwatchTimerScreen>
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _resetCountdown(); // Reset timer after dialog is closed
+                _resetCountdown();
               },
               child: const Text('OK'),
             ),
           ],
         );
       },
-      barrierDismissible: false, // Prevent dismissing by tapping outside
+      barrierDismissible: false,
     );
   }
 
-  // --- Helper for formatting Duration ---
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final String hours = twoDigits(duration.inHours);
-    final String minutes = twoDigits(duration.inMinutes.remainder(60));
-    final String seconds = twoDigits(duration.inSeconds.remainder(60));
-    final String milliseconds = twoDigits(
-      duration.inMilliseconds.remainder(1000) ~/ 10,
-    ); // Two digits for milliseconds
-
-    if (duration.inHours > 0) {
-      return '$hours:$minutes:$seconds.$milliseconds';
-    } else if (duration.inMinutes > 0 || duration.inSeconds > 0) {
-      // For timer, we only need MM:SS
-      if (_tabController.index == 1) {
-        // If it's the timer tab
-        return '$minutes:$seconds';
-      }
-      return '$minutes:$seconds.$milliseconds';
-    } else {
-      // For timer, if it's 00:00, show that. For stopwatch, show 00:00:00.00
-      if (_tabController.index == 1) {
-        return '00:00';
-      }
-      return '00:00:00.00';
-    }
-  }
-
   @override
-  void dispose() {
-    _stopwatchTimer?.cancel();
-    _countdownTimer?.cancel();
+  void dispose() async {
     _tabController.dispose();
     super.dispose();
+    await _stopWatchTimer.dispose();
+    await _countDownTimer.dispose();
   }
 
   @override
@@ -208,10 +179,7 @@ class _StopwatchTimerScreenState extends State<StopwatchTimerScreen>
         title: 'Stopwatch & Timer',
         helpContentKey: 'STOPWATCH_TIMER_TOOL',
         bottom: PreferredSize(
-          // FIX: Wrap TabBar in PreferredSize
-          preferredSize: const Size.fromHeight(
-            kTextTabBarHeight,
-          ), // Explicitly set TabBar height
+          preferredSize: const Size.fromHeight(kTextTabBarHeight),
           child: TabBar(
             controller: _tabController,
             tabs: const [
@@ -219,8 +187,9 @@ class _StopwatchTimerScreenState extends State<StopwatchTimerScreen>
               Tab(text: 'Timer', icon: Icon(Icons.hourglass_empty)),
             ],
             labelColor: Theme.of(context).colorScheme.onPrimary,
-            unselectedLabelColor: Theme.of(context).colorScheme.onPrimary
-                .withAlpha((255 * 0.7).round()), // FIX: Used withAlpha
+            unselectedLabelColor: Theme.of(
+              context,
+            ).colorScheme.onPrimary.withAlpha((255 * 0.7).round()),
             indicatorColor: Theme.of(context).colorScheme.secondary,
           ),
         ),
@@ -247,36 +216,56 @@ class _StopwatchTimerScreenState extends State<StopwatchTimerScreen>
                           color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(height: 24),
-                        Text(
-                          _stopwatchDisplay,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.displayMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontFeatures: const [
-                              FontFeature.tabularFigures(),
-                            ], // Monospaced numbers
-                          ),
+                        StreamBuilder<int>(
+                          stream: _stopWatchTimer.rawTime,
+                          initialData: _stopWatchTimer.rawTime.value,
+                          builder: (context, snap) {
+                            final value = snap.data!;
+                            final displayTime = StopWatchTimer.getDisplayTime(
+                              value,
+                              hours: true,
+                              milliSecond: true,
+                            );
+                            return Text(
+                              displayTime,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.displayMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                                fontSize: 24,
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            CustomButton(
-                              text: _stopwatch.isRunning ? 'Pause' : 'Start',
-                              onPressed:
-                                  _stopwatch.isRunning
-                                      ? _pauseStopwatch
-                                      : _startStopwatch,
-                              icon:
-                                  _stopwatch.isRunning
-                                      ? Icons.pause
-                                      : Icons.play_arrow,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                              textStyle: const TextStyle(fontSize: 18),
+                            StreamBuilder<int>(
+                              stream: _stopWatchTimer.rawTime,
+                              initialData: _stopWatchTimer.rawTime.value,
+                              builder: (context, snap) {
+                                final isRunning = _stopWatchTimer.isRunning;
+                                return CustomButton(
+                                  text: isRunning ? 'Pause' : 'Start',
+                                  onPressed:
+                                      isRunning
+                                          ? _pauseStopwatch
+                                          : _startStopwatch,
+                                  icon:
+                                      isRunning
+                                          ? Icons.pause
+                                          : Icons.play_arrow,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                  textStyle: const TextStyle(fontSize: 18),
+                                );
+                              },
                             ),
                             CustomButton(
                               text: 'Reset',
@@ -317,44 +306,75 @@ class _StopwatchTimerScreenState extends State<StopwatchTimerScreen>
                           color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(height: 24),
-                        Text(
-                          _countdownDisplay,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.displayMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontFeatures: const [
-                              FontFeature.tabularFigures(),
-                            ], // Monospaced numbers
-                          ),
+                        StreamBuilder<int>(
+                          stream: _countDownTimer.rawTime,
+                          initialData: _countDownTimer.rawTime.value,
+                          builder: (context, snap) {
+                            final value = snap.data!;
+                            final displayTime = StopWatchTimer.getDisplayTime(
+                              value,
+                              hours: false,
+                              milliSecond: false,
+                            );
+                            return Text(
+                              displayTime,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.displayMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 24,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 24),
+                        CustomButton(
+                          text: 'Set Timer',
+                          onPressed:
+                              _countDownTimer.isRunning
+                                  ? null
+                                  : _setTimerDuration,
+                          icon: Icons.edit,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          textStyle: const TextStyle(fontSize: 18),
+                        ),
+                        const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            CustomButton(
-                              text: 'Set Timer',
-                              onPressed:
-                                  _isCountdownRunning
-                                      ? null
-                                      : _setTimerDuration,
-                              icon: Icons.edit,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                              textStyle: const TextStyle(fontSize: 18),
+                            StreamBuilder<int>(
+                              stream: _countDownTimer.rawTime,
+                              initialData: _countDownTimer.rawTime.value,
+                              builder: (context, snap) {
+                                final isRunning = _countDownTimer.isRunning;
+                                return CustomButton(
+                                  text: isRunning ? 'Pause' : 'Start',
+                                  onPressed:
+                                      isRunning
+                                          ? _pauseCountdown
+                                          : _startCountdown,
+                                  icon:
+                                      isRunning
+                                          ? Icons.pause
+                                          : Icons.play_arrow,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                  textStyle: const TextStyle(fontSize: 18),
+                                );
+                              },
                             ),
                             CustomButton(
-                              text: _isCountdownRunning ? 'Pause' : 'Start',
-                              onPressed:
-                                  _isCountdownRunning
-                                      ? _pauseCountdown
-                                      : _startCountdown,
-                              icon:
-                                  _isCountdownRunning
-                                      ? Icons.pause
-                                      : Icons.play_arrow,
+                              text: 'Reset',
+                              onPressed: _resetCountdown,
+                              icon: Icons.refresh,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 20,
                                 vertical: 12,
@@ -362,17 +382,6 @@ class _StopwatchTimerScreenState extends State<StopwatchTimerScreen>
                               textStyle: const TextStyle(fontSize: 18),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 16),
-                        CustomButton(
-                          text: 'Reset',
-                          onPressed: _resetCountdown,
-                          icon: Icons.refresh,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          textStyle: const TextStyle(fontSize: 18),
                         ),
                       ],
                     ),

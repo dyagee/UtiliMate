@@ -36,7 +36,14 @@ class CustomButton extends StatelessWidget {
         elevation: 4,
         shadowColor: Theme.of(context).colorScheme.shadow,
       ),
-      icon: icon != null ? Icon(icon) : const SizedBox.shrink(),
+      icon:
+          icon != null
+              ? Icon(
+                icon,
+                color:
+                    foregroundColor ?? Theme.of(context).colorScheme.onPrimary,
+              )
+              : const SizedBox.shrink(),
       label: Text(
         text,
         style:
