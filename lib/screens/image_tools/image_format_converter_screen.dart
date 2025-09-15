@@ -26,7 +26,6 @@ class _ImageFormatConverterScreenState
     'png',
     'jpeg',
     'gif',
-    'webp',
     'bmp',
     'tiff',
   ]; // Supported by image package
@@ -105,30 +104,32 @@ class _ImageFormatConverterScreenState
           return;
       }
 
-      final String outputPath =
-          '${(await FileUtils.getAppDirectory()).path}/converted_image_${DateTime.now().millisecondsSinceEpoch}.$outputExtension';
-      final File outputFile = File(outputPath);
-      await outputFile.writeAsBytes(encodedBytes);
+      // FIX: Use FileUtils.saveFile to save to the public Downloads folder with the new naming convention
+      final String fileName =
+          'converted_image_${DateTime.now().millisecondsSinceEpoch}.$outputExtension';
+      final String? filePath = await FileUtils.saveFile(encodedBytes, fileName);
 
-      if (mounted) {
+      if (filePath != null && mounted) {
         showDialog(
           context: context,
           builder:
               (context) => ConfirmationDialog(
                 title: 'Success!',
                 message:
-                    'Image converted to $_selectedFormat successfully!\nFile saved at: ${outputPath.split('/').last}',
-                onConfirm: () => FileUtils.openFile(outputPath, context),
+                    'Image converted to $_selectedFormat successfully!\nFile saved at: ${filePath.split('/').last}',
+                onConfirm: () => FileUtils.openFile(filePath, context),
                 confirmButtonText: 'Open File',
                 showCancelButton: true,
                 cancelButtonText: 'Share File',
-                onCancel: () => FileUtils.shareFile(outputPath, context),
+                onCancel: () => FileUtils.shareFile(filePath, context),
               ),
         );
         setState(() {
           _selectedImage = null; // Clear selected image after operation
           _selectedFormat = null;
         });
+      } else if (mounted) {
+        _showSnackBar('Failed to save converted image.', isError: true);
       }
     } catch (e) {
       if (mounted) {

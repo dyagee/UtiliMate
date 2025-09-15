@@ -51,6 +51,8 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
       );
       if (byteData != null) {
         final List<int> pngBytes = byteData.buffer.asUint8List();
+
+        // FIX: Construct the file name and pass to the updated saveFile method
         final String fileName =
             'qr_code_${DateTime.now().millisecondsSinceEpoch}.png';
         final String? filePath = await FileUtils.saveFile(pngBytes, fileName);

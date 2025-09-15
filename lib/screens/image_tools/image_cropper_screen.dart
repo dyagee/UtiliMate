@@ -123,24 +123,27 @@ class _ImageCropperScreenState extends State<ImageCropperScreen> {
         height: height,
       );
 
-      final String outputPath =
-          '${(await FileUtils.getAppDirectory()).path}/cropped_image_${DateTime.now().millisecondsSinceEpoch}.png';
-      final File outputFile = File(outputPath);
-      await outputFile.writeAsBytes(img.encodePng(croppedImage));
+      // FIX: Use FileUtils.saveFile to save to downloads with the suffix
+      final String fileName =
+          'cropped_image_${DateTime.now().millisecondsSinceEpoch}.png';
+      final String? filePath = await FileUtils.saveFile(
+        img.encodePng(croppedImage),
+        fileName,
+      );
 
-      if (mounted) {
+      if (filePath != null && mounted) {
         showDialog(
           context: context,
           builder:
               (context) => ConfirmationDialog(
                 title: 'Success!',
                 message:
-                    'Image cropped successfully!\nFile saved at: ${outputPath.split('/').last}',
-                onConfirm: () => FileUtils.openFile(outputPath, context),
+                    'Image cropped successfully!\nFile saved at: ${filePath.split('/').last}',
+                onConfirm: () => FileUtils.openFile(filePath, context),
                 confirmButtonText: 'Open File',
                 showCancelButton: true,
                 cancelButtonText: 'Share File',
-                onCancel: () => FileUtils.shareFile(outputPath, context),
+                onCancel: () => FileUtils.shareFile(filePath, context),
               ),
         );
         setState(() {
@@ -152,6 +155,8 @@ class _ImageCropperScreenState extends State<ImageCropperScreen> {
           _widthController.clear();
           _heightController.clear();
         });
+      } else if (mounted) {
+        _showSnackBar('Failed to save cropped image.', isError: true);
       }
     } catch (e) {
       if (mounted) {
