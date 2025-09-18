@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui'; // Needed for Offset and Size
@@ -7,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:image/image.dart' as img;
 import 'package:utilimate/utils/file_utils.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sync_pdf;
+import 'dart:developer' as developer; // For logging
 
 class PdfUtils {
   /// Converts a list of image files to a single PDF document.
@@ -21,7 +20,7 @@ class PdfUtils {
         final imageBytes = await imageFile.readAsBytes();
         final image = img.decodeImage(imageBytes);
         if (image == null) {
-          print('Could not decode image: ${imageFile.path}');
+          developer.log('Could not decode image: ${imageFile.path}');
           continue;
         }
 
@@ -38,12 +37,12 @@ class PdfUtils {
         );
         pagesAdded++;
       } catch (e) {
-        print('Error processing image ${imageFile.path}: $e');
+        developer.log('Error processing image ${imageFile.path}: $e');
       }
     }
 
     if (pagesAdded == 0) {
-      print('No valid images processed for PDF creation.');
+      developer.log('No valid images processed for PDF creation.');
       return null;
     }
 
@@ -86,7 +85,7 @@ class PdfUtils {
 
       return FileUtils.saveFile(bytes, fileName);
     } catch (e) {
-      print('Error merging PDFs: $e');
+      developer.log('Error merging PDFs: $e');
       return null;
     }
   }
@@ -128,7 +127,7 @@ class PdfUtils {
       // Changed return message to return the list directly, as per signature
       return savedPaths;
     } catch (e) {
-      print('Error splitting PDF: $e');
+      developer.log('Error splitting PDF: $e');
       return []; // Return empty list on error
     }
   }
@@ -146,7 +145,7 @@ class PdfUtils {
       if (startPage < 1 ||
           endPage > originalDoc.pages.count ||
           startPage > endPage) {
-        print(
+        developer.log(
           'Invalid page range: start=$startPage, end=$endPage, total=${originalDoc.pages.count}',
         );
         originalDoc.dispose();
@@ -176,7 +175,7 @@ class PdfUtils {
 
       return FileUtils.saveFile(bytes, fileName);
     } catch (e) {
-      print('Error splitting PDF by page range: $e');
+      developer.log('Error splitting PDF by page range: $e');
       return null;
     }
   }
@@ -197,7 +196,7 @@ class PdfUtils {
       document.dispose();
       return savedPath;
     } catch (e) {
-      print('Error compressing PDF: $e');
+      developer.log('Error compressing PDF: $e');
       return null;
     }
   }

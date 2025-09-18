@@ -1,10 +1,10 @@
 // lib/utils/image_utils.dart
-// ignore_for_file: avoid_print
 
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img; // Ensure this import is correct
 import 'package:utilimate/utils/file_utils.dart'; // For saveFile
+import 'dart:developer' as developer; // For logging
 
 class ImageUtils {
   /// Resizes an image to the specified width and/or height.
@@ -19,7 +19,7 @@ class ImageUtils {
       img.Image? originalImage = img.decodeImage(imageBytes);
 
       if (originalImage == null) {
-        print('Could not decode image: ${imageFile.path}');
+        developer.log('Could not decode image: ${imageFile.path}');
         return null;
       }
 
@@ -35,7 +35,7 @@ class ImageUtils {
       } else if (height != null) {
         resizedImage = img.copyResize(originalImage, height: height);
       } else {
-        print('No dimensions provided for resizing.');
+        developer.log('No dimensions provided for resizing.');
         return null;
       }
 
@@ -46,7 +46,7 @@ class ImageUtils {
       );
       return FileUtils.saveFile(resizedBytes, fileName);
     } catch (e) {
-      print('Error resizing image: $e');
+      developer.log('Error resizing image: $e');
       return null;
     }
   }
@@ -66,7 +66,7 @@ class ImageUtils {
       img.Image? originalImage = img.decodeImage(imageBytes);
 
       if (originalImage == null) {
-        print('Could not decode image: ${imageFile.path}');
+        developer.log('Could not decode image: ${imageFile.path}');
         return null;
       }
 
@@ -75,7 +75,7 @@ class ImageUtils {
           y < 0 ||
           x + width > originalImage.width ||
           y + height > originalImage.height) {
-        print('Crop dimensions out of image bounds.');
+        developer.log('Crop dimensions out of image bounds.');
         return null;
       }
 
@@ -94,7 +94,7 @@ class ImageUtils {
       );
       return FileUtils.saveFile(croppedBytes, fileName);
     } catch (e) {
-      print('Error cropping image: $e');
+      developer.log('Error cropping image: $e');
       return null;
     }
   }
@@ -109,7 +109,7 @@ class ImageUtils {
       img.Image? originalImage = img.decodeImage(imageBytes);
 
       if (originalImage == null) {
-        print('Could not decode image: ${imageFile.path}');
+        developer.log('Could not decode image: ${imageFile.path}');
         return null;
       }
 
@@ -140,7 +140,7 @@ class ImageUtils {
           newExtension = 'tiff';
           break;
         default:
-          print('Unsupported format: $format');
+          developer.log('Unsupported format: $format');
           return null;
       }
 
@@ -148,7 +148,7 @@ class ImageUtils {
           'converted_${DateTime.now().millisecondsSinceEpoch}.$newExtension';
       return FileUtils.saveFile(convertedBytes, fileName);
     } catch (e) {
-      print('Error converting image format: $e');
+      developer.log('Error converting image format: $e');
       return null;
     }
   }

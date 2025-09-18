@@ -1,5 +1,4 @@
 // lib/utils/file_utils.dart
-// ignore_for_file: avoid_print
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -8,6 +7,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:android_path_provider/android_path_provider.dart';
+import 'dart:developer' as developer; // For logging
 
 class FileUtils {
   static const String _utilimateFileSuffix = '_utilimate';
@@ -18,7 +18,7 @@ class FileUtils {
     if (Platform.isAndroid) {
       final status = await Permission.storage.request();
       if (!status.isGranted) {
-        print('Permission denied to access storage.');
+        developer.log('Permission denied to access storage.');
         return null;
       }
       final Directory downloadDir = Directory(
@@ -76,10 +76,10 @@ class FileUtils {
 
       final File file = File(filePath);
       await file.writeAsBytes(bytes);
-      print('File saved to: ${file.path}');
+      developer.log('File saved to: ${file.path}');
       return file.path;
     } catch (e) {
-      print('Error saving file: $e');
+      developer.log('Error saving file: $e');
       return null;
     }
   }
@@ -95,7 +95,7 @@ class FileUtils {
       }
       return dir.listSync(recursive: false).toList();
     } catch (e) {
-      print('Error listing files: $e');
+      developer.log('Error listing files: $e');
       return [];
     }
   }
@@ -112,7 +112,7 @@ class FileUtils {
         }
       }
     } catch (e) {
-      print('Error opening file: $e');
+      developer.log('Error opening file: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -128,10 +128,10 @@ class FileUtils {
       final Directory parentDir = oldFile.parent;
       final String newPath = '${parentDir.path}/$newName';
       await oldFile.rename(newPath);
-      print('File renamed from $oldPath to $newPath');
+      developer.log('File renamed from $oldPath to $newPath');
       return true;
     } catch (e) {
-      print('Error renaming file: $e');
+      developer.log('Error renaming file: $e');
       return false;
     }
   }
@@ -142,12 +142,12 @@ class FileUtils {
       final File file = File(filePath);
       if (await file.exists()) {
         await file.delete();
-        print('File deleted: $filePath');
+        developer.log('File deleted: $filePath');
         return true;
       }
       return false;
     } catch (e) {
-      print('Error deleting file: $e');
+      developer.log('Error deleting file: $e');
       return false;
     }
   }
@@ -163,7 +163,7 @@ class FileUtils {
         ),
       );
     } catch (e) {
-      print('Error sharing file: $e');
+      developer.log('Error sharing file: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,

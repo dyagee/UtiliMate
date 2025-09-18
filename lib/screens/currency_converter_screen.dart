@@ -1,10 +1,13 @@
 // lib/screens/currency_converter_screen.dart
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:utilimate/services/connectivity_service.dart';
 import 'package:utilimate/services/currency_service.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/custom_button.dart';
 import 'package:utilimate/widgets/loading_indicator.dart';
 import 'package:intl/intl.dart'; // Import for NumberFormat
+import 'package:utilimate/services/ad_manager.dart';
 
 class CurrencyConverterScreen extends StatefulWidget {
   const CurrencyConverterScreen({super.key});
@@ -24,11 +27,23 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   double _convertedAmount = 0.0;
   bool _isLoading = false;
   String? _errorMessage;
+  AdWidget? _bannerAdWidget;
 
   @override
   void initState() {
     super.initState();
     _fetchCurrencies();
+    _bannerAdWidget = AdManager().createBannerAdWidget();
+
+    // Listen for connectivity changes to show/hide the ad
+    ConnectivityService().onConnectivityChange.listen((isConnected) {
+      if (mounted) {
+        setState(() {
+          _bannerAdWidget =
+              isConnected ? AdManager().createBannerAdWidget() : null;
+        });
+      }
+    });
   }
 
   Future<void> _fetchCurrencies() async {
@@ -354,6 +369,14 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
           if (_isLoading) const LoadingIndicator(),
         ],
       ),
+      bottomNavigationBar:
+          _bannerAdWidget != null
+              ? SizedBox(
+                width: AdSize.banner.width.toDouble(),
+                height: AdSize.banner.height.toDouble(),
+                child: _bannerAdWidget!,
+              )
+              : null,
     );
   }
 }

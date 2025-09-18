@@ -1,9 +1,9 @@
 // lib/services/currency_service.dart
-// ignore_for_file: avoid_print
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // New import
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer; // For logging
 
 class CurrencyService {
   // IMPORTANT: Replace 'YOUR_API_KEY' with your actual API key from openexchangerates.org
@@ -36,7 +36,7 @@ class CurrencyService {
         cachedTimestampMillis,
       );
       if (DateTime.now().difference(cachedTime) < _cacheDuration) {
-        print('Returning cached supported currencies.');
+        developer.log('Returning cached supported currencies.');
         return List<String>.from(json.decode(cachedCurrenciesJson));
       }
     }
@@ -44,7 +44,7 @@ class CurrencyService {
     // Cache is old or doesn't exist, fetch from API
     final uri = Uri.parse('$_baseUrl/currencies.json?app_id=$_apiKey');
     try {
-      print('Fetching supported currencies from API...');
+      developer.log('Fetching supported currencies from API...');
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
@@ -58,7 +58,7 @@ class CurrencyService {
           _currenciesTimestampKey,
           DateTime.now().millisecondsSinceEpoch,
         );
-        print('Successfully fetched and cached supported currencies.');
+        developer.log('Successfully fetched and cached supported currencies.');
         return currencies;
       } else {
         throw Exception(
@@ -66,10 +66,12 @@ class CurrencyService {
         );
       }
     } catch (e) {
-      print('Error fetching supported currencies from API: $e');
+      developer.log('Error fetching supported currencies from API: $e');
       // If API fails, try to return stale cache if available
       if (cachedCurrenciesJson != null) {
-        print('API failed, returning stale cached supported currencies.');
+        developer.log(
+          'API failed, returning stale cached supported currencies.',
+        );
         return List<String>.from(json.decode(cachedCurrenciesJson));
       }
       rethrow; // Re-throw if no cache available
@@ -92,7 +94,7 @@ class CurrencyService {
         cachedTimestampMillis,
       );
       if (DateTime.now().difference(cachedTime) < _cacheDuration) {
-        print('Returning cached exchange rates for $baseCurrency.');
+        developer.log('Returning cached exchange rates for $baseCurrency.');
         return Map<String, double>.from(
           json
               .decode(cachedRatesJson)
@@ -108,7 +110,7 @@ class CurrencyService {
     // and then convert client-side if a different base is selected.
     final uri = Uri.parse('$_baseUrl/latest.json?app_id=$_apiKey');
     try {
-      print('Fetching exchange rates for $baseCurrency from API...');
+      developer.log('Fetching exchange rates for $baseCurrency from API...');
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
@@ -139,7 +141,7 @@ class CurrencyService {
                   ratesTimestampKey,
                   DateTime.now().millisecondsSinceEpoch,
                 );
-                print(
+                developer.log(
                   'Successfully fetched USD rates, converted to $baseCurrency, and cached.',
                 );
                 return convertedRates;
@@ -158,7 +160,9 @@ class CurrencyService {
               ratesTimestampKey,
               DateTime.now().millisecondsSinceEpoch,
             );
-            print('Successfully fetched and cached USD exchange rates.');
+            developer.log(
+              'Successfully fetched and cached USD exchange rates.',
+            );
             return fetchedRates;
           }
         } else {
@@ -170,10 +174,10 @@ class CurrencyService {
         );
       }
     } catch (e) {
-      print('Error fetching exchange rates from API: $e');
+      developer.log('Error fetching exchange rates from API: $e');
       // If API fails, try to return stale cache if available
       if (cachedRatesJson != null) {
-        print(
+        developer.log(
           'API failed, returning stale cached exchange rates for $baseCurrency.',
         );
         return Map<String, double>.from(

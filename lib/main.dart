@@ -8,6 +8,7 @@ import 'package:utilimate/screens/settings_screen.dart';
 import 'package:utilimate/widgets/categories_modal_sheet.dart';
 import 'package:utilimate/services/connectivity_service.dart'; // Import the new service
 import 'dart:developer' as developer; // For logging
+import 'package:google_mobile_ads/google_mobile_ads.dart'; // For admob
 
 // Define a global key for the navigator state
 // This is crucial for showing SnackBars from anywhere in the app
@@ -18,6 +19,7 @@ void main() {
   // Initialize the ConnectivityService right at the start of the app.
   // This will begin listening for connectivity changes immediately.
   ConnectivityService();
+  MobileAds.instance.initialize();
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeService(),

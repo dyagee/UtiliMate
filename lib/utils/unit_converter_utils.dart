@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+import 'dart:developer' as developer; // For logging
 
 enum UnitCategory { length, weight, temperature, volume, area, time, speed }
 
@@ -130,14 +130,14 @@ class UnitConverter {
       try {
         return _convertTemperature(value, fromUnit, toUnit);
       } catch (e) {
-        print('Temperature conversion error: $e');
+        developer.log('Temperature conversion error: $e');
         return null;
       }
     }
 
     final factors = _conversionFactors[category];
     if (factors == null) {
-      print('Unsupported unit category: $category');
+      developer.log('Unsupported unit category: $category');
       return null;
     }
 
@@ -145,7 +145,9 @@ class UnitConverter {
     final toFactor = factors[toUnit];
 
     if (fromFactor == null || toFactor == null) {
-      print('Unsupported unit for category $category: $fromUnit or $toUnit');
+      developer.log(
+        'Unsupported unit for category $category: $fromUnit or $toUnit',
+      );
       return null;
     }
 
