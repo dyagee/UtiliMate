@@ -1,8 +1,9 @@
-// lib/screens/generators/fake_address_generator_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For Clipboard
 import 'package:faker_dart/faker_dart.dart'; // Import faker_dart
 import 'package:utilimate/widgets/custom_app_bar.dart';
+import 'package:utilimate/services/ad_manager.dart'; // Import AdManager
+import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import Google Mobile Ads
 
 class FakeAddressGeneratorScreen extends StatefulWidget {
   const FakeAddressGeneratorScreen({super.key});
@@ -15,12 +16,11 @@ class FakeAddressGeneratorScreen extends StatefulWidget {
 class _FakeAddressGeneratorScreenState
     extends State<FakeAddressGeneratorScreen> {
   String _generatedAddress = '';
-  String? _selectedCountry; // Initialized in initState
-  // String? _selectedState; // Removed: No longer needed
+  String? _selectedCountry;
+  AdWidget? _bannerAdWidget; // Variable to hold the AdWidget
 
   late final Faker _faker;
 
-  // Map display country names to FakerLocaleType
   static const Map<String, FakerLocaleType> _countryToLocale = {
     'United States': FakerLocaleType.en_US,
     'Canada': FakerLocaleType.en_CA,
@@ -35,52 +35,40 @@ class _FakeAddressGeneratorScreenState
     'Russia': FakerLocaleType.ru,
     'Finland': FakerLocaleType.fi,
     'Czech Republic': FakerLocaleType.cz,
-    // Add other countries as needed, mapping to their respective locales
   };
-
-  // Removed: _statesByCountry is no longer needed as the state dropdown is removed.
-  // static const Map<String, List<String>> _statesByCountry = {
-  //   'United States': ['California', 'New York', 'Texas', 'Florida'],
-  //   'Canada': ['Ontario', 'Quebec', 'British Columbia'],
-  //   'United Kingdom': ['England', 'Scotland', 'Wales'],
-  //   'France': ['Île-de-France', 'Occitanie', 'Provence-Alpes-Côte d\'Azur'],
-  //   'Spain': ['Andalusia', 'Catalonia', 'Madrid'],
-  //   'Germany': ['Bavaria', 'North Rhine-Westphalia', 'Berlin'],
-  //   'Japan': ['Tokyo', 'Osaka', 'Kyoto'],
-  //   'Turkey': ['Istanbul', 'Ankara', 'Izmir'],
-  //   'Vietnam': ['Hanoi', 'Ho Chi Minh City', 'Da Nang'],
-  //   'Sweden': ['Stockholm', 'Västra Götaland', 'Skåne'],
-  //   'Russia': ['Moscow Oblast', 'Saint Petersburg', 'Krasnodar Krai'],
-  //   'Finland': ['Uusimaa', 'Pirkanmaa', 'Southwest Finland'],
-  //   'Czech Republic': ['Prague', 'Central Bohemia', 'South Moravian'],
-  // };
 
   @override
   void initState() {
     super.initState();
     _faker = Faker.instance;
-    // Initialize _selectedCountry with a default value
     _selectedCountry = 'United States';
-    // Set initial locale for faker_dart based on the default selected country
     _faker.setLocale(
       _countryToLocale[_selectedCountry!] ?? FakerLocaleType.en_US,
     );
-    _generateAddress(); // Generate a default address on init
+    _generateAddress();
+
+    // Initialize the banner ad widget
+    _bannerAdWidget = AdManager().getBannerAdWidget();
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _bannerAdWidget = AdManager().getBannerAdWidget();
+        });
+      }
+    });
   }
 
   void _generateAddress() {
     setState(() {
       FakerLocaleType effectiveLocale =
-          _countryToLocale[_selectedCountry!] ??
-          FakerLocaleType.en_US; // Now guaranteed non-null
-      _faker.setLocale(effectiveLocale); // Set the locale for faker
+          _countryToLocale[_selectedCountry!] ?? FakerLocaleType.en_US;
+      _faker.setLocale(effectiveLocale);
 
-      // FakerDart will automatically generate a state/province appropriate
-      // for the set locale.
       _generatedAddress =
           '${_faker.address.streetAddress()}\n'
           '${_faker.address.city()}, ${_faker.address.state()} ${_faker.address.zipCode()}\n'
-          '${_selectedCountry!}'; // Use the selected country directly to ensure consistency
+          '${_selectedCountry!}';
     });
   }
 
@@ -99,9 +87,7 @@ class _FakeAddressGeneratorScreenState
 
   @override
   Widget build(BuildContext context) {
-    // Removed: statesForSelectedCountry is no longer needed
-    // List<String> statesForSelectedCountry =
-    //     _statesByCountry[_selectedCountry ?? 'United States'] ?? [];
+    final bool isBannerAdReady = _bannerAdWidget != null;
 
     return Scaffold(
       appBar: const CustomAppBar(
@@ -135,21 +121,18 @@ class _FakeAddressGeneratorScreenState
                     const SizedBox(height: 16),
                     // Country Dropdown
                     DropdownButtonFormField<String>(
-                      value:
-                          _selectedCountry, // Now initialized to 'United States'
+                      value: _selectedCountry,
                       decoration: const InputDecoration(
                         labelText: 'Country',
                         border: OutlineInputBorder(),
                       ),
-                      // Removed default from hint, value will be displayed
                       hint: const Text('Select Country'),
                       onChanged: (String? newValue) {
                         setState(() {
                           _selectedCountry = newValue;
-                          // Removed: _selectedState = null; no longer needed
                         });
                       },
-                      isExpanded: true, // Keep isExpanded: true
+                      isExpanded: true,
                       items:
                           _countryToLocale.keys
                               .toList()
@@ -164,41 +147,13 @@ class _FakeAddressGeneratorScreenState
                               })
                               .toList(),
                     ),
-                    const SizedBox(
-                      height: 24,
-                    ), // Increased spacing after country dropdown
-                    // Removed: State/Region (Simulated) Dropdown
-                    // DropdownButtonFormField<String>(
-                    //   value: _selectedState,
-                    //   decoration: const InputDecoration(
-                    //     labelText: 'State/Region (Simulated)',
-                    //     border: OutlineInputBorder(),
-                    //   ),
-                    //   hint: const Text('Select State/Region (Optional)'),
-                    //   onChanged: (String? newValue) {
-                    //     setState(() {
-                    //       _selectedState = newValue;
-                    //     });
-                    //   },
-                    //   isExpanded: true,
-                    //   items: statesForSelectedCountry
-                    //       .map<DropdownMenuItem<String>>((String value) {
-                    //     return DropdownMenuItem<String>(
-                    //       value: value,
-                    //       child: Text(value, overflow: TextOverflow.ellipsis),
-                    //     );
-                    //   }).toList(),
-                    //   isDense: true,
-                    // ),
-                    // const SizedBox(height: 24), // Spacing after state dropdown, if present
+                    const SizedBox(height: 24),
                     ElevatedButton.icon(
                       onPressed: _generateAddress,
                       icon: const Icon(Icons.refresh),
                       label: const Text('Generate Address'),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(
-                          50,
-                        ), // Full width button
+                        minimumSize: const Size.fromHeight(50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -240,10 +195,7 @@ class _FakeAddressGeneratorScreenState
                             context,
                           ).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context)
-                                    .colorScheme
-                                    .onSurface, // Assuming onSurface is appropriate for contrast
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -254,9 +206,7 @@ class _FakeAddressGeneratorScreenState
                         icon: const Icon(Icons.copy),
                         label: const Text('Copy to Clipboard'),
                         style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(
-                            50,
-                          ), // Full width button
+                          minimumSize: const Size.fromHeight(50),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -269,6 +219,14 @@ class _FakeAddressGeneratorScreenState
           ],
         ),
       ),
+      bottomNavigationBar:
+          isBannerAdReady
+              ? SizedBox(
+                width: AdSize.banner.width.toDouble(),
+                height: AdSize.banner.height.toDouble(),
+                child: _bannerAdWidget!,
+              )
+              : null,
     );
   }
 }

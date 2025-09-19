@@ -2,6 +2,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For Clipboard
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:utilimate/services/ad_manager.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
 
 // Supported languages/locales
@@ -37,6 +39,7 @@ class _FakeNameGeneratorScreenState extends State<FakeNameGeneratorScreen> {
   LocaleOption _selectedLocale = LocaleOption.english;
   GenderOption _selectedGender = GenderOption.any;
   String _generatedName = "";
+  AdWidget? _bannerAdWidget; // Variable to hold the AdWidget
 
   final Random _random = Random();
 
@@ -3164,6 +3167,17 @@ class _FakeNameGeneratorScreenState extends State<FakeNameGeneratorScreen> {
   void initState() {
     super.initState();
     _generateName(); // Generate a default name on init
+
+    // Initialize the banner ad widget
+    _bannerAdWidget = AdManager().getBannerAdWidget();
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _bannerAdWidget = AdManager().getBannerAdWidget();
+        });
+      }
+    });
   }
 
   void _generateName() {
@@ -3207,6 +3221,7 @@ class _FakeNameGeneratorScreenState extends State<FakeNameGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isBannerAdReady = _bannerAdWidget != null;
     return Scaffold(
       appBar: const CustomAppBar(
         title: 'Fake Name Generator',
@@ -3362,6 +3377,14 @@ class _FakeNameGeneratorScreenState extends State<FakeNameGeneratorScreen> {
           ],
         ),
       ),
+      bottomNavigationBar:
+          isBannerAdReady
+              ? SizedBox(
+                width: AdSize.banner.width.toDouble(),
+                height: AdSize.banner.height.toDouble(),
+                child: _bannerAdWidget!,
+              )
+              : null,
     );
   }
 }

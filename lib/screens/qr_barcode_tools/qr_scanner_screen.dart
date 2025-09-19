@@ -1,10 +1,11 @@
-// lib/screens/qr_barcode_tools/qr_scanner_screen.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/confirmation_dialog.dart';
-import 'package:flutter/services.dart'; // For Clipboard
-import 'package:permission_handler/permission_handler.dart'; // Import permission_handler
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:utilimate/services/ad_manager.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -15,18 +16,32 @@ class QrScannerScreen extends StatefulWidget {
 
 class _QrScannerScreenState extends State<QrScannerScreen> {
   MobileScannerController cameraController = MobileScannerController(
-    torchEnabled: false, // Start with torch off by default
+    torchEnabled: false,
   );
   bool _isScanning = true;
   String _scanResult = 'Scan a QR code or barcode';
-  bool _isTorchOn = false; // Manually manage torch state
+  bool _isTorchOn = false;
   bool _permissionGranted = false;
   String? _permissionError;
+  AdWidget? _bannerAdWidget;
 
   @override
   void initState() {
     super.initState();
     _requestCameraPermission();
+
+    // Get the banner ad widget from the AdManager.
+    _bannerAdWidget = AdManager().getBannerAdWidget();
+
+    // The AdManager handles the asynchronous ad loading. We use setState
+    // here to force a rebuild if the ad loads after the widget is first built.
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _bannerAdWidget = AdManager().getBannerAdWidget();
+        });
+      }
+    });
   }
 
   Future<void> _requestCameraPermission() async {
@@ -36,7 +51,6 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         if (status.isGranted) {
           _permissionGranted = true;
           _permissionError = null;
-          // Camera starts automatically when MobileScanner widget is built and permission is granted
         } else {
           _permissionGranted = false;
           _permissionError =
@@ -57,16 +71,15 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   }
 
   void _handleBarcode(BarcodeCapture barcodeCapture) {
-    if (!_isScanning) return; // Prevent multiple scans while dialog is open
+    if (!_isScanning) return;
 
     final String? code = barcodeCapture.barcodes.first.rawValue;
     if (code != null && code != _scanResult) {
       setState(() {
         _scanResult = code;
-        _isScanning = false; // Pause scanning
+        _isScanning = false;
       });
-      cameraController
-          .stop(); // Explicitly stop the camera when a result is found
+      cameraController.stop();
       _showScanResultDialog(code);
     }
   }
@@ -74,7 +87,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   void _showScanResultDialog(String result) {
     showDialog(
       context: context,
-      barrierDismissible: false, // User must interact with the dialog
+      barrierDismissible: true,
       builder:
           (context) => ConfirmationDialog(
             title: 'Scan Result',
@@ -82,14 +95,16 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             onConfirm: () {
               Clipboard.setData(ClipboardData(text: result));
               _showSnackBar('Result copied to clipboard!');
-              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop();
+              AdManager().loadInterstitialAd();
               _resumeScanning();
             },
             confirmButtonText: 'Copy Result',
             showCancelButton: true,
             cancelButtonText: 'Scan Again',
             onCancel: () {
-              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop();
+              AdManager().loadInterstitialAd();
               _resumeScanning();
             },
           ),
@@ -100,9 +115,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     setState(() {
       _isScanning = true;
       _scanResult = 'Scan a QR code or barcode';
-      _isTorchOn = false; // Reset torch state when resuming scan
+      _isTorchOn = false;
     });
-    cameraController.start(); // Resume the camera
+    cameraController.start();
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -114,23 +129,24 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     );
   }
 
-  // Manually toggle torch and update local state
   Future<void> _toggleTorch() async {
     await cameraController.toggleTorch();
     setState(() {
-      _isTorchOn = !_isTorchOn; // Update local state after toggle
+      _isTorchOn = !_isTorchOn;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Check if the banner ad is ready to be displayed
+    final bool isBannerAdReady = _bannerAdWidget != null;
+
     return Scaffold(
       appBar: CustomAppBar(
         title: 'QR & Barcode Scanner',
-        helpContentKey: 'QR_SCANNER_TOOL', // Updated help key
+        helpContentKey: 'QR_SCANNER_TOOL',
         actions: [
-          // Flashlight button
-          if (_permissionGranted) // Only show flashlight if camera permission is granted
+          if (_permissionGranted)
             IconButton(
               color: Colors.white,
               icon: Icon(
@@ -138,7 +154,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                 color: _isTorchOn ? Colors.yellow : Colors.grey,
               ),
               iconSize: 32.0,
-              onPressed: _toggleTorch, // Call our manual toggle method
+              onPressed: _toggleTorch,
             ),
         ],
       ),
@@ -150,7 +166,6 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // FIX: Replaced Icons.camera_alt_off with Icons.no_photography
                       Icon(
                         Icons.no_photography,
                         size: 80,
@@ -168,8 +183,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton.icon(
-                        // Using ElevatedButton.icon for better visibility
-                        onPressed: () => openAppSettings(), // Open app settings
+                        onPressed: () => openAppSettings(),
                         icon: const Icon(Icons.settings),
                         label: const Text('Open App Settings'),
                       ),
@@ -178,72 +192,60 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                 ),
               )
               : !_permissionGranted
-              ? const Center(
-                child: CircularProgressIndicator(),
-              ) // Show loading while requesting permission
-              : Column(
+              ? const Center(child: CircularProgressIndicator())
+              : Stack(
                 children: [
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        MobileScanner(
-                          controller: cameraController,
-                          onDetect: _handleBarcode,
-                          // FIX: Simplified errorBuilder signature and used error.toString()
-                          errorBuilder: (
-                            BuildContext context,
-                            MobileScannerException error,
-                          ) {
-                            return Center(
-                              child: Text(
-                                'Error initializing camera: ${error.toString()}', // FIX: Use error.toString()
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        // Custom overlay for visual border
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: const Color.fromRGBO(
-                                255,
-                                255,
-                                255,
-                                0.5, // Alpha as double
-                              ),
-                              width: 2.0,
-                            ),
+                  MobileScanner(
+                    controller: cameraController,
+                    onDetect: _handleBarcode,
+                    errorBuilder: (
+                      BuildContext context,
+                      MobileScannerException error,
+                    ) {
+                      return Center(
+                        child: Text(
+                          'Error initializing camera: ${error.toString()}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
                           ),
                         ),
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            color: const Color.fromRGBO(
-                              0,
-                              0,
-                              0,
-                              0.6, // Alpha as double
-                            ),
-                            child: Text(
-                              _scanResult,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
+                      );
+                    },
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: const Color.fromRGBO(255, 255, 255, 0.5),
+                        width: 2.0,
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      color: const Color.fromRGBO(0, 0, 0, 0.6),
+                      child: Text(
+                        _scanResult,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
                         ),
-                      ],
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ],
               ),
+      bottomNavigationBar:
+          isBannerAdReady
+              ? SizedBox(
+                width: AdSize.banner.width.toDouble(),
+                height: AdSize.banner.height.toDouble(),
+                child: _bannerAdWidget!,
+              )
+              : null,
     );
   }
 }

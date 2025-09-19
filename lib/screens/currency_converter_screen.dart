@@ -1,12 +1,11 @@
 // lib/screens/currency_converter_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:utilimate/services/connectivity_service.dart';
 import 'package:utilimate/services/currency_service.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/custom_button.dart';
 import 'package:utilimate/widgets/loading_indicator.dart';
-import 'package:intl/intl.dart'; // Import for NumberFormat
+import 'package:intl/intl.dart';
 import 'package:utilimate/services/ad_manager.dart';
 
 class CurrencyConverterScreen extends StatefulWidget {
@@ -27,20 +26,25 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   double _convertedAmount = 0.0;
   bool _isLoading = false;
   String? _errorMessage;
+
+  // Holds the AdWidget for the banner ad
   AdWidget? _bannerAdWidget;
 
   @override
   void initState() {
     super.initState();
     _fetchCurrencies();
-    _bannerAdWidget = AdManager().createBannerAdWidget();
 
-    // Listen for connectivity changes to show/hide the ad
-    ConnectivityService().onConnectivityChange.listen((isConnected) {
+    // Get the banner ad widget using the singleton's method.
+    _bannerAdWidget = AdManager().getBannerAdWidget();
+
+    // Use a delayed future to force a rebuild after the ad has loaded.
+    // This ensures the ad is displayed correctly even if it loads
+    // after the initial widget build.
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
-          _bannerAdWidget =
-              isConnected ? AdManager().createBannerAdWidget() : null;
+          _bannerAdWidget = AdManager().getBannerAdWidget();
         });
       }
     });
@@ -163,10 +167,8 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDisabled = _isLoading || _currencies.isEmpty;
+    final bool isBannerAdReady = _bannerAdWidget != null;
 
-    // Corrected: Use NumberFormat.decimalPattern for reliable grouping
-    // It will format with commas and respect locale's decimal separator.
-    // For exactly two decimal places, we can set minimumFractionDigits and maximumFractionDigits.
     final NumberFormat currencyFormatter =
         NumberFormat.decimalPattern('en_US')
           ..minimumFractionDigits = 2
@@ -370,7 +372,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
         ],
       ),
       bottomNavigationBar:
-          _bannerAdWidget != null
+          isBannerAdReady
               ? SizedBox(
                 width: AdSize.banner.width.toDouble(),
                 height: AdSize.banner.height.toDouble(),

@@ -1,12 +1,13 @@
-// lib/screens/text_tools/ocr_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart'; // Ensure this is imported
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter/services.dart'; // For Clipboard
+import 'package:flutter/services.dart';
 import 'package:utilimate/widgets/custom_button.dart';
 import 'package:utilimate/widgets/loading_indicator.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
+import 'package:utilimate/services/ad_manager.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class OcrScreen extends StatefulWidget {
   const OcrScreen({super.key});
@@ -20,7 +21,30 @@ class _OcrScreenState extends State<OcrScreen> {
   String _extractedText = '';
   File? _selectedImage;
 
+  // Holds the AdWidget for the banner ad
+  AdWidget? _bannerAdWidget;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Get the banner ad widget using the singleton's method.
+    _bannerAdWidget = AdManager().getBannerAdWidget();
+
+    // Use a delayed future to force a rebuild after the ad has loaded.
+    // This ensures the ad is displayed correctly even if it loads
+    // after the initial widget build.
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _bannerAdWidget = AdManager().getBannerAdWidget();
+        });
+      }
+    });
+  }
+
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -45,7 +69,6 @@ class _OcrScreenState extends State<OcrScreen> {
     });
 
     try {
-      // Corrected: Use TextRecognitionScript.latin
       final textRecognizer = TextRecognizer(
         script: TextRecognitionScript.latin,
       );
@@ -94,6 +117,9 @@ class _OcrScreenState extends State<OcrScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if the banner ad is ready to be displayed
+    final bool isBannerAdReady = _bannerAdWidget != null;
+
     return Scaffold(
       appBar: const CustomAppBar(
         title: 'OCR (Image to Text)',
@@ -222,6 +248,14 @@ class _OcrScreenState extends State<OcrScreen> {
           if (_isLoading) const LoadingIndicator(),
         ],
       ),
+      bottomNavigationBar:
+          isBannerAdReady
+              ? SizedBox(
+                width: AdSize.banner.width.toDouble(),
+                height: AdSize.banner.height.toDouble(),
+                child: _bannerAdWidget!,
+              )
+              : null,
     );
   }
 }

@@ -1,13 +1,15 @@
-// lib/screens/qr_barcode_tools/qr_generator_screen.dart
-import 'dart:ui' as ui; // Import for ImageByteFormat
-import 'dart:typed_data'; // New import for ByteData
+import 'dart:ui' as ui;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart'; // For RepaintBoundary
+import 'package:flutter/rendering.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:utilimate/utils/file_utils.dart';
 import 'package:utilimate/widgets/custom_button.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/confirmation_dialog.dart';
+import 'package:utilimate/services/ad_manager.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:developer' as developer;
 
 class QrGeneratorScreen extends StatefulWidget {
   const QrGeneratorScreen({super.key});
@@ -19,8 +21,25 @@ class QrGeneratorScreen extends StatefulWidget {
 class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   final TextEditingController _qrDataController = TextEditingController();
   String _generatedQrData = '';
-  final GlobalKey _qrKey =
-      GlobalKey(); // Key to capture QR code widget as image
+  final GlobalKey _qrKey = GlobalKey();
+  AdWidget? _bannerAdWidget;
+
+  @override
+  void initState() {
+    super.initState();
+    // Get the banner ad widget from the AdManager.
+    _bannerAdWidget = AdManager().getBannerAdWidget();
+
+    // The AdManager handles the asynchronous ad loading. We use setState
+    // here to force a rebuild if the ad loads after the widget is first built.
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _bannerAdWidget = AdManager().getBannerAdWidget();
+        });
+      }
+    });
+  }
 
   void _generateQrCode() {
     setState(() {
@@ -43,21 +62,22 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
     try {
       RenderRepaintBoundary boundary =
           _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(
-        pixelRatio: 3.0,
-      ); // High resolution
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData = await image.toByteData(
         format: ui.ImageByteFormat.png,
       );
       if (byteData != null) {
         final List<int> pngBytes = byteData.buffer.asUint8List();
-
-        // FIX: Construct the file name and pass to the updated saveFile method
         final String fileName =
             'qr_code_${DateTime.now().millisecondsSinceEpoch}.png';
         final String? filePath = await FileUtils.saveFile(pngBytes, fileName);
 
         if (filePath != null && mounted) {
+          developer.log(
+            'QR Generator: File saved. Attempting to show interstitial ad.',
+          );
+          AdManager().loadInterstitialAd();
+
           showDialog(
             context: context,
             builder:
@@ -99,16 +119,27 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if the banner ad is ready to be displayed
+    final bool isBannerAdReady = _bannerAdWidget != null;
     return Scaffold(
       appBar: const CustomAppBar(
         title: 'QR Code Generator',
-        helpContentKey: 'QR_GENERATOR_TOOL', // Updated help key
+        helpContentKey: 'QR_GENERATOR_TOOL',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (isBannerAdReady)
+              Align(
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: AdSize.banner.width.toDouble(),
+                  height: AdSize.banner.height.toDouble(),
+                  child: _bannerAdWidget!,
+                ),
+              ),
             Card(
               margin: const EdgeInsets.only(bottom: 16),
               child: Padding(

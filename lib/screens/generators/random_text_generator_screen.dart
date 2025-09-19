@@ -1,10 +1,11 @@
-// lib/screens/generators/random_text_generator_screen.dart
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For Clipboard
 import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/custom_button.dart';
+import 'package:utilimate/services/ad_manager.dart'; // Import AdManager
+import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import Google Mobile Ads
 
 class RandomTextGeneratorScreen extends StatefulWidget {
   const RandomTextGeneratorScreen({super.key});
@@ -20,6 +21,7 @@ class _RandomTextGeneratorScreenState extends State<RandomTextGeneratorScreen> {
   );
   String _generatedText = 'Tap "Generate Text" to get random paragraphs.';
   String? _errorMessage;
+  AdWidget? _bannerAdWidget;
 
   // A long string of Lorem Ipsum text to generate paragraphs from
   static const String _loremIpsum =
@@ -33,6 +35,21 @@ class _RandomTextGeneratorScreenState extends State<RandomTextGeneratorScreen> {
       "Sed posuere consectetur est at lobortis. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum. Donec ullamcorper nulla non metus auctor fringilla. Cras mattis consectetur purus sit amet fermentum. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit."
       "Vestibulum id ligula porta felis euismod semper. Nullam id dolor id nibh ultricies vehicula ut id elit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Nullam quis risus eget urna mollis ornare vel eu leo."
       "Aenean lacinia bibendum nulla sed consectetur. Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the banner ad widget
+    _bannerAdWidget = AdManager().getBannerAdWidget();
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _bannerAdWidget = AdManager().getBannerAdWidget();
+        });
+      }
+    });
+  }
 
   void _generateText() {
     setState(() {
@@ -97,11 +114,12 @@ class _RandomTextGeneratorScreenState extends State<RandomTextGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isBannerAdReady = _bannerAdWidget != null;
+
     return Scaffold(
       appBar: const CustomAppBar(
         title: 'Random Text Generator',
-        helpContentKey:
-            'RANDOM_TEXT_GENERATOR_TOOL', // Will add this to AppConstants
+        helpContentKey: 'RANDOM_TEXT_GENERATOR_TOOL',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -212,6 +230,14 @@ class _RandomTextGeneratorScreenState extends State<RandomTextGeneratorScreen> {
           ],
         ),
       ),
+      bottomNavigationBar:
+          isBannerAdReady
+              ? SizedBox(
+                width: AdSize.banner.width.toDouble(),
+                height: AdSize.banner.height.toDouble(),
+                child: _bannerAdWidget!,
+              )
+              : null,
     );
   }
 }

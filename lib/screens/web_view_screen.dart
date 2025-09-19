@@ -1,4 +1,3 @@
-// lib/screens/web_view_screen.dart
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -11,6 +10,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:android_path_provider/android_path_provider.dart';
+// Import the AdManager class and Google Mobile Ads library
+import 'package:utilimate/services/ad_manager.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class WebViewScreen extends StatefulWidget {
   final String title;
@@ -33,6 +35,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
   bool _isLoading = true;
   double _downloadProgress = 0.0;
   String _downloadFileName = '';
+  // The AdWidget will now be managed by the state itself, with the
+  // AdManager providing the ad instance.
+  AdWidget? _adWidget;
 
   static const String _utilimateFileSuffix = '_utilimate';
 
@@ -46,6 +51,21 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   void initState() {
     super.initState();
+
+    // The AdManager is a singleton, so we can check its state.
+    // The `_adWidget` is now set directly by the `AdManager`.
+    _adWidget = AdManager().getBannerAdWidget();
+
+    // A simple way to handle the state change for a singleton.
+    // In a more complex app, you might use a listener pattern.
+    // This setState call forces a rebuild when the ad is loaded.
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _adWidget = AdManager().getBannerAdWidget();
+        });
+      }
+    });
 
     _controller =
         WebViewController()
@@ -155,128 +175,129 @@ class _WebViewScreenState extends State<WebViewScreen> {
       'WebView: Disposing WebViewScreen, attempting to close SnackBar.',
     );
     _snackBarController?.close();
+    // The AdManager handles ad disposal, so we don't dispose it here.
     super.dispose();
   }
 
   void _injectJavaScript() {
     _controller.runJavaScript('''
-      function getSuggestedFileName(url) {
-          if (!url) return 'download';
-          var path = url.split('/').pop().split('?')[0];
-          if (path.length > 50) {
-              path = path.substring(0, 50) + '...';
-          }
-          return decodeURIComponent(path.replace(/[^a-zA-Z0-9.\\-_]/g, '_'));
-      }
+        function getSuggestedFileName(url) {
+            if (!url) return 'download';
+            var path = url.split('/').pop().split('?')[0];
+            if (path.length > 50) {
+                path = path.substring(0, 50) + '...';
+            }
+            return decodeURIComponent(path.replace(/[^a-zA-Z0-9.\\-_]/g, '_'));
+        }
 
-      var originalWindowOpen = window.open;
-      window.open = function(url, name, features) {
-          if (url && url.startsWith('http')) {
-              var suggestedName = getSuggestedFileName(url);
-              FlutterDownloadChannel.postMessage(JSON.stringify({url: url, suggestedName: suggestedName}));
-              return null;
-          }
-          return originalWindowOpen(url, name, features);
-      };
+        var originalWindowOpen = window.open;
+        window.open = function(url, name, features) {
+            if (url && url.startsWith('http')) {
+                var suggestedName = getSuggestedFileName(url);
+                FlutterDownloadChannel.postMessage(JSON.stringify({url: url, suggestedName: suggestedName}));
+                return null;
+            }
+            return originalWindowOpen(url, name, features);
+        };
 
-      function isDownloadUrl(url) {
-          if (!url) return false;
-          var path = url.toLowerCase();
-          return path.endsWith('.mp4') ||
-                         path.endsWith('.mov') ||
-                         path.endsWith('.avi') ||
-                         path.endsWith('.mkv') ||
-                         path.endsWith('.webm') ||
-                         path.endsWith('.mp3') ||
-                         path.endsWith('.wav') ||
-                         path.endsWith('.zip') ||
-                         path.endsWith('.rar') ||
-                         path.endsWith('.pdf') ||
-                         path.endsWith('.doc') || path.endsWith('.docx') ||
-                         path.endsWith('.xls') || path.endsWith('.xlsx') ||
-                         path.endsWith('.ppt') || path.endsWith('.pptx');
-      }
+        function isDownloadUrl(url) {
+            if (!url) return false;
+            var path = url.toLowerCase();
+            return path.endsWith('.mp4') ||
+                                        path.endsWith('.mov') ||
+                                        path.endsWith('.avi') ||
+                                        path.endsWith('.mkv') ||
+                                        path.endsWith('.webm') ||
+                                        path.endsWith('.mp3') ||
+                                        path.endsWith('.wav') ||
+                                        path.endsWith('.zip') ||
+                                        path.endsWith('.rar') ||
+                                        path.endsWith('.pdf') ||
+                                        path.endsWith('.doc') || path.endsWith('.docx') ||
+                                        path.endsWith('.xls') || path.endsWith('.xlsx') ||
+                                        path.endsWith('.ppt') || path.endsWith('.pptx');
+        }
 
-      document.addEventListener('click', function(event) {
-          var target = event.target;
-          while (target && target.tagName !== 'A') {
-              target = target.parentNode;
-          }
+        document.addEventListener('click', function(event) {
+            var target = event.target;
+            while (target && target.tagName !== 'A') {
+                target = target.parentNode;
+            }
 
-          if (target && target.tagName === 'A') {
-              var href = target.href;
-              if (isDownloadUrl(href) || (href && !href.startsWith(window.location.origin))) {
-                  var suggestedName = target.innerText.trim();
-                  if (!suggestedName) {
-                      suggestedName = getSuggestedFileName(this.href);
-                  }
-                  FlutterDownloadChannel.postMessage(JSON.stringify({url: href, suggestedName: suggestedName}));
-                  event.preventDefault();
-                  event.stopPropagation();
-              }
-          }
-      }, true);
+            if (target && target.tagName === 'A') {
+                var href = target.href;
+                if (isDownloadUrl(href) || (href && !href.startsWith(window.location.origin))) {
+                    var suggestedName = target.innerText.trim();
+                    if (!suggestedName) {
+                        suggestedName = getSuggestedFileName(this.href);
+                    }
+                    FlutterDownloadChannel.postMessage(JSON.stringify({url: href, suggestedName: suggestedName}));
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+        }, true);
 
-      setTimeout(function() {
-          var downloadLinks = document.querySelectorAll('a[download], a[href*=".mp4"], a[href*=".mov"], a[href*=".pdf"], a[href*=".zip"]');
-          downloadLinks.forEach(function(link) {
-              if (link.offsetParent !== null && link.href && link.href.startsWith('http')) {
-                  link.addEventListener('click', function(e) {
-                      e.preventDefault();
-                      var suggestedName = link.innerText.trim();
-                      if (!suggestedName) {
-                          suggestedName = getSuggestedFileName(this.href);
-                      }
-                      FlutterDownloadChannel.postMessage(JSON.stringify({url: this.href, suggestedName: suggestedName}));
-                  });
-              }
-          });
-      }, 2000);
+        setTimeout(function() {
+            var downloadLinks = document.querySelectorAll('a[download], a[href*=".mp4"], a[href*=".mov"], a[href*=".pdf"], a[href*=".zip"]');
+            downloadLinks.forEach(function(link) {
+                if (link.offsetParent !== null && link.href && link.href.startsWith('http')) {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        var suggestedName = link.innerText.trim();
+                        if (!suggestedName) {
+                            suggestedName = getSuggestedFileName(this.href);
+                        }
+                        FlutterDownloadChannel.postMessage(JSON.stringify({url: this.href, suggestedName: suggestedName}));
+                    });
+                }
+            });
+        }, 2000);
 
-      // Function to hide specified classes
-      function hideElements() {
-          var classesToHide = [
-              '.header',
-              '.main-form_watch_show',
-              '.main-form_watch',
-              '.link-plus',
-              '.norton',
-              '.wrapper.wrapper-after-output',
-              '.other',
-              '.smart-app-br.dh-top-banner',
-              '.f-nav-box-column.f-nav-container',
-              '.sf-apk-pro.extra' // This is the class we need to persistently hide
-          ];
+        // Function to hide specified classes
+        function hideElements() {
+            var classesToHide = [
+                '.header',
+                '.main-form_watch_show',
+                '.main-form_watch',
+                '.link-plus',
+                '.norton',
+                '.wrapper.wrapper-after-output',
+                '.other',
+                '.smart-app-br.dh-top-banner',
+                '.f-nav-box-column.f-nav-container',
+                '.sf-apk-pro.extra' // This is the class we need to persistently hide
+            ];
 
-          classesToHide.forEach(function(className) {
-              var elements = document.querySelectorAll(className);
-              elements.forEach(function(element) {
-                  if (element) {
-                      element.style.display = 'none';
-                      // console.log('Hidden element with class: ' + className); // Uncomment for debugging
-                  }
-              });
-          });
-      }
+            classesToHide.forEach(function(className) {
+                var elements = document.querySelectorAll(className);
+                elements.forEach(function(element) {
+                    if (element) {
+                        element.style.display = 'none';
+                        // console.log('Hidden element with class: ' + className); // Uncomment for debugging
+                    }
+                });
+            });
+        }
 
-      // Run hideElements initially
-      hideElements();
+        // Run hideElements initially
+        hideElements();
 
-      // Set up a MutationObserver to watch for changes in the DOM
-      var observer = new MutationObserver(function(mutations) {
-          mutations.forEach(function(mutation) {
-              // If nodes were added, check if they match our classes and hide them
-              if (mutation.addedNodes.length > 0) {
-                  hideElements(); // Re-run hide logic for new elements
-              }
-          });
-      });
+        // Set up a MutationObserver to watch for changes in the DOM
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                // If nodes were added, check if they match our classes and hide them
+                if (mutation.addedNodes.length > 0) {
+                    hideElements(); // Re-run hide logic for new elements
+                }
+            });
+        });
 
-      // Start observing the entire document body for subtree modifications
-      observer.observe(document.body, { childList: true, subtree: true });
+        // Start observing the entire document body for subtree modifications
+        observer.observe(document.body, { childList: true, subtree: true });
 
-      // Optional: Also run hideElements after a short delay for initial rendering
-      setTimeout(hideElements, 500);
+        // Optional: Also run hideElements after a short delay for initial rendering
+        setTimeout(hideElements, 500);
     ''');
   }
 
@@ -505,6 +526,22 @@ class _WebViewScreenState extends State<WebViewScreen> {
               ),
             );
 
+            // Trigger the rewarded ad here
+            developer.log('WebView: Download complete. Showing rewarded ad.');
+            AdManager().loadAndShowRewardedAd((reward) {
+              // This is the callback that runs when the user earns the reward.
+              // You can log the reward details here if you want.
+              developer.log(
+                'User earned reward: ${reward.amount} ${reward.type}',
+              );
+              // Add a confirmation message to the user.
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Enjoy your download!'),
+                  backgroundColor: Colors.blue,
+                ),
+              );
+            });
             if (Platform.isAndroid) {
               try {
                 await _channel.invokeMethod('scanFile', {
@@ -559,6 +596,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Use the field directly instead of re-fetching the widget
+    final bool isBannerAdReady = _adWidget != null;
+
     return Scaffold(
       appBar: CustomAppBar(
         title: widget.title,
@@ -566,7 +606,23 @@ class _WebViewScreenState extends State<WebViewScreen> {
       ),
       body: Stack(
         children: [
-          WebViewWidget(controller: _controller),
+          // Banner Ad at the top
+          if (isBannerAdReady)
+            Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: AdSize.banner.width.toDouble(),
+                height: AdSize.banner.height.toDouble(),
+                child: _adWidget!, // Use the field here
+              ),
+            ),
+
+          // The WebView below the ad
+          Positioned.fill(
+            top: isBannerAdReady ? AdSize.banner.height.toDouble() : 0,
+            child: WebViewWidget(controller: _controller),
+          ),
+
           if (_isLoading) const Center(child: CircularProgressIndicator()),
           if (_downloadProgress > 0 && _downloadProgress < 1.0)
             Align(

@@ -1,4 +1,3 @@
-// lib/screens/pdf_tools/image_to_pdf_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +7,8 @@ import 'package:utilimate/widgets/custom_button.dart';
 import 'package:utilimate/widgets/loading_indicator.dart';
 import 'package:utilimate/widgets/confirmation_dialog.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
+import 'package:utilimate/services/ad_manager.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class ImageToPdfScreen extends StatefulWidget {
   const ImageToPdfScreen({super.key});
@@ -20,7 +21,28 @@ class _ImageToPdfScreenState extends State<ImageToPdfScreen> {
   bool _isLoading = false;
   List<File> _selectedImages = [];
 
+  // Holds the AdWidget for the banner ad
+  AdWidget? _bannerAdWidget;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Get the banner ad widget using the singleton's method.
+    _bannerAdWidget = AdManager().getBannerAdWidget();
+
+    // Use a delayed future to force a rebuild after the ad has loaded.
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _bannerAdWidget = AdManager().getBannerAdWidget();
+        });
+      }
+    });
+  }
+
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -98,6 +120,9 @@ class _ImageToPdfScreenState extends State<ImageToPdfScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if the banner ad is ready to be displayed
+    final bool isBannerAdReady = _bannerAdWidget != null;
+
     return Scaffold(
       appBar: const CustomAppBar(
         title: 'Image to PDF Converter',
@@ -167,6 +192,14 @@ class _ImageToPdfScreenState extends State<ImageToPdfScreen> {
           if (_isLoading) const LoadingIndicator(),
         ],
       ),
+      bottomNavigationBar:
+          isBannerAdReady
+              ? SizedBox(
+                width: AdSize.banner.width.toDouble(),
+                height: AdSize.banner.height.toDouble(),
+                child: _bannerAdWidget!,
+              )
+              : null,
     );
   }
 }
