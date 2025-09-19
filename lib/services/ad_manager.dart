@@ -7,9 +7,9 @@ class AdManager {
   factory AdManager() => _instance;
 
   AdManager._internal() {
-    // Load the banner ad as soon as the manager is initialized.
-    // The ad will be ready to be shown later when the UI requests it.
+    // Load the two banner ads and other ad types upon creation.
     _loadBannerAd();
+    _loadFileBrowserBannerAd();
   }
 
   // Test Ad Unit IDs
@@ -21,9 +21,9 @@ class AdManager {
   // Ad Unit IDs
   // static const String bannerAdUnitId = 'ca-app-pub-2416673076573660/1493290195';
   // static const String interstitialAdUnitId =
-  //     'ca-app-pub-2416673076573660/4081878791';
+  //     'ca-app-pub-2416673076573660/4081878791';
   // static const String rewardedAdUnitId =
-  //     'ca-app-pub-2416673076573660/5301808732';
+  //     'ca-app-pub-2416673076573660/5301808732';
 
   // Private fields to hold ad instances and their loading state
   BannerAd? _bannerAd;
@@ -31,28 +31,48 @@ class AdManager {
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
 
+  // New private fields for the dedicated file browser banner ad
+  BannerAd? _fileBrowserBannerAd;
+  bool _isFileBrowserBannerAdLoaded = false;
+
   // Method to check for connectivity
   bool get _isOnline => ConnectivityService().isConnected;
 
-  // Banner Ad: Loads the ad internally and sets a flag when it's ready.
-  // This is a private method that the singleton calls upon creation.
+  // Public method to get the AdWidget for the standard banner.
+  AdWidget? getBannerAdWidget() {
+    if (_isBannerAdLoaded && _bannerAd != null) {
+      developer.log("Standard banner ad returned.");
+      return AdWidget(ad: _bannerAd!);
+    }
+    return null;
+  }
+
+  // Public method to get the AdWidget for the file browser banner.
+  AdWidget? getFileBrowserBannerAdWidget() {
+    if (_isFileBrowserBannerAdLoaded && _fileBrowserBannerAd != null) {
+      developer.log("File Browser banner ad returned.");
+      return AdWidget(ad: _fileBrowserBannerAd!);
+    }
+    return null;
+  }
+
+  // Private method to load the standard banner ad.
   void _loadBannerAd() {
     if (!_isOnline) {
-      developer.log('Not loading Banner Ad: No internet connection.');
+      developer.log('Not loading standard Banner Ad: No internet connection.');
       return;
     }
-
     _bannerAd = BannerAd(
       adUnitId: bannerAdUnitId,
       request: const AdRequest(),
       size: AdSize.banner,
       listener: BannerAdListener(
         onAdLoaded: (Ad ad) {
-          developer.log('Banner ad loaded.');
+          developer.log('Standard banner ad loaded.');
           _isBannerAdLoaded = true;
         },
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          developer.log('Banner ad failed to load: $error');
+          developer.log('Standard banner ad failed to load: $error');
           _isBannerAdLoaded = false;
           ad.dispose();
         },
@@ -61,14 +81,31 @@ class AdManager {
     _bannerAd!.load();
   }
 
-  // Public method to get the AdWidget for the UI.
-  // Returns null if the ad is not yet loaded, which the UI should handle.
-  AdWidget? getBannerAdWidget() {
-    if (_isBannerAdLoaded && _bannerAd != null) {
-      developer.log("Banner ad returned.");
-      return AdWidget(ad: _bannerAd!);
+  // Private method to load the dedicated file browser banner ad.
+  void _loadFileBrowserBannerAd() {
+    if (!_isOnline) {
+      developer.log(
+        'Not loading File Browser Banner Ad: No internet connection.',
+      );
+      return;
     }
-    return null;
+    _fileBrowserBannerAd = BannerAd(
+      adUnitId: bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (Ad ad) {
+          developer.log('File Browser banner ad loaded.');
+          _isFileBrowserBannerAdLoaded = true;
+        },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          developer.log('File Browser banner ad failed to load: $error');
+          _isFileBrowserBannerAdLoaded = false;
+          ad.dispose();
+        },
+      ),
+    );
+    _fileBrowserBannerAd!.load();
   }
 
   // Interstitial Ad: Loads the ad and shows it at a specific moment
@@ -132,6 +169,7 @@ class AdManager {
 
   void dispose() {
     _bannerAd?.dispose();
+    _fileBrowserBannerAd?.dispose();
     _interstitialAd?.dispose();
     _rewardedAd?.dispose();
   }

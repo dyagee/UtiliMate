@@ -22,32 +22,21 @@ class GenericCategoryScreen extends StatefulWidget {
 }
 
 class _GenericCategoryScreenState extends State<GenericCategoryScreen> {
-  // Holds the AdWidget for the banner ad
-  AdWidget? _bannerAdWidget;
-
   @override
   void initState() {
     super.initState();
+  }
 
-    // Get the banner ad widget using the singleton's method.
-    _bannerAdWidget = AdManager().getBannerAdWidget();
-
-    // Use a delayed future to force a rebuild after the ad has loaded.
-    // This ensures the ad is displayed correctly even if it loads
-    // after the initial widget build.
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        setState(() {
-          _bannerAdWidget = AdManager().getBannerAdWidget();
-        });
-      }
-    });
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final AdWidget? bannerAdWidget = AdManager().getBannerAdWidget();
     // Check if the banner ad is ready to be displayed
-    final bool isBannerAdReady = _bannerAdWidget != null;
+    final bool isBannerAdReady = bannerAdWidget != null;
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -60,7 +49,7 @@ class _GenericCategoryScreenState extends State<GenericCategoryScreen> {
               ? SizedBox(
                 width: AdSize.banner.width.toDouble(),
                 height: AdSize.banner.height.toDouble(),
-                child: _bannerAdWidget!,
+                child: bannerAdWidget,
               )
               : null,
     );

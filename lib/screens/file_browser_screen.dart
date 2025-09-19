@@ -28,22 +28,16 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
   String? _permissionError;
 
   static const String _utilimateFileSuffix = '_utilimate';
-  AdWidget? _bannerAdWidget;
 
   @override
   void initState() {
     super.initState();
     _loadFiles();
-    // Initialize the banner ad widget
-    _bannerAdWidget = AdManager().getBannerAdWidget();
+  }
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        setState(() {
-          _bannerAdWidget = AdManager().getBannerAdWidget();
-        });
-      }
-    });
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -437,192 +431,195 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isBannerAdReady = _bannerAdWidget != null;
+    // CRITICAL: Use the new, peculiar method to get the dedicated banner ad.
+    final AdWidget? bannerAdWidget = AdManager().getFileBrowserBannerAdWidget();
+    final bool isBannerAdReady = bannerAdWidget != null;
+
     return Scaffold(
       appBar: const CustomAppBar(
         title: 'File Manager',
         helpContentKey: 'FILE_MANAGEMENT_TOOL',
         showBackButton: false,
       ),
-      body: SingleChildScrollView(
-        child: Stack(
-          children: [
-            _isLoading
-                ? const Center(child: LoadingIndicator())
-                : _permissionError != null
-                ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.folder_off,
-                          size: 80,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          _permissionError!,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton.icon(
-                          onPressed: () => openAppSettings(),
-                          icon: const Icon(Icons.settings),
-                          label: const Text('Open App Settings'),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                : _files.isEmpty
-                ? Center(
+      body: Stack(
+        children: [
+          _isLoading
+              ? const Center(child: LoadingIndicator())
+              : _permissionError != null
+              ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.folder_open,
+                        Icons.folder_off,
                         size: 80,
-                        color: Theme.of(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        _permissionError!,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withAlpha((0.5 * 255).round()),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No UtiliMate files found yet.',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface
-                              .withAlpha((0.7 * 255).round()),
+                        ).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Generated files and downloads from UtiliMate will appear here.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface
-                              .withAlpha((0.6 * 255).round()),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      CustomButton(
-                        text: 'Refresh Files',
-                        onPressed: _loadFiles,
-                        icon: Icons.refresh,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () => openAppSettings(),
+                        icon: const Icon(Icons.settings),
+                        label: const Text('Open App Settings'),
                       ),
                     ],
                   ),
-                )
-                : RefreshIndicator(
-                  onRefresh: _loadFiles,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: _files.length,
-                    itemBuilder: (context, index) {
-                      final file = _files[index];
-                      final String fileName = file.path.split('/').last;
-                      final DateTime lastModified = file.statSync().modified;
-                      final String formattedDate = DateFormat(
-                        'yyyy-MM-dd HH:mm',
-                      ).format(lastModified);
-                      final String fileSize = _getFileSize(file.path);
-
-                      // Remove the UtiliMate suffix for display purposes
-                      String displayName = _getBaseName(fileName);
-                      if (displayName.endsWith(_utilimateFileSuffix)) {
-                        displayName = displayName.substring(
-                          0,
-                          displayName.length - _utilimateFileSuffix.length,
-                        );
-                      }
-                      String? displayExtension = _getExtension(fileName);
-                      if (displayExtension != null) {
-                        displayName += '.$displayExtension';
-                      }
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          leading: Icon(
-                            _getFileIcon(fileName),
-                            color: Theme.of(context).colorScheme.secondary,
-                            size: 36,
-                          ),
-                          title: Text(
-                            displayName,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            'Modified: $formattedDate\nSize: $fileSize',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  Icons.edit,
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                ),
-                                onPressed: () => _renameFile(file),
-                                tooltip: 'Rename',
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.share,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                onPressed: () => _shareFile(file.path),
-                                tooltip: 'Share',
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.delete,
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                                onPressed: () => _deleteFile(file),
-                                tooltip: 'Delete',
-                              ),
-                            ],
-                          ),
-                          onTap: () => _openFile(file.path),
-                        ),
-                      );
-                    },
-                  ),
                 ),
-          ],
-        ),
+              )
+              : _files.isEmpty
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.folder_open,
+                      size: 80,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((0.5 * 255).round()),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No UtiliMate files found yet.',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha((0.7 * 255).round()),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Generated files and downloads from UtiliMate will appear here.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha((0.6 * 255).round()),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    CustomButton(
+                      text: 'Refresh Files',
+                      onPressed: _loadFiles,
+                      icon: Icons.refresh,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+              : RefreshIndicator(
+                onRefresh: _loadFiles,
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: _files.length,
+                  itemBuilder: (context, index) {
+                    final file = _files[index];
+                    final String fileName = file.path.split('/').last;
+                    final DateTime lastModified = file.statSync().modified;
+                    final String formattedDate = DateFormat(
+                      'yyyy-MM-dd HH:mm',
+                    ).format(lastModified);
+                    final String fileSize = _getFileSize(file.path);
+
+                    // Remove the UtiliMate suffix for display purposes
+                    String displayName = _getBaseName(fileName);
+                    if (displayName.endsWith(_utilimateFileSuffix)) {
+                      displayName = displayName.substring(
+                        0,
+                        displayName.length - _utilimateFileSuffix.length,
+                      );
+                    }
+                    String? displayExtension = _getExtension(fileName);
+                    if (displayExtension != null) {
+                      displayName += '.$displayExtension';
+                    }
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        leading: Icon(
+                          _getFileIcon(fileName),
+                          color: Theme.of(context).colorScheme.secondary,
+                          size: 36,
+                        ),
+                        title: Text(
+                          displayName,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          'Modified: $formattedDate\nSize: $fileSize',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.edit,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                              ),
+                              onPressed: () => _renameFile(file),
+                              tooltip: 'Rename',
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.share,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              onPressed: () => _shareFile(file.path),
+                              tooltip: 'Share',
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              onPressed: () => _deleteFile(file),
+                              tooltip: 'Delete',
+                            ),
+                          ],
+                        ),
+                        onTap: () => _openFile(file.path),
+                      ),
+                    );
+                  },
+                ),
+              ),
+        ],
       ),
       bottomNavigationBar:
           isBannerAdReady
               ? SizedBox(
                 width: AdSize.banner.width.toDouble(),
                 height: AdSize.banner.height.toDouble(),
-                child: _bannerAdWidget!,
+                child: bannerAdWidget,
               )
               : null,
       floatingActionButton:

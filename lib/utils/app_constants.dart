@@ -650,7 +650,7 @@ class AppConstants {
       helpContentKey: 'IMAGE_TOOLS_CATEGORY',
     ),
     CategoryItem(
-      name: 'Video Downloaders',
+      name: 'Downloaders',
       icon: Icons.video_library,
       screenBuilder:
           (context) => GenericCategoryScreen(
@@ -662,7 +662,7 @@ class AppConstants {
       helpContentKey: 'VIDEO_DOWNLOADERS_CATEGORY',
     ),
     CategoryItem(
-      name: 'QR & Barcode Tools',
+      name: 'Barcode Tools',
       icon: Icons.qr_code_scanner,
       screenBuilder:
           (context) => GenericCategoryScreen(

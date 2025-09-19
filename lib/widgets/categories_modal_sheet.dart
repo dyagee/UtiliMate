@@ -45,7 +45,7 @@ class CategoriesModalSheet extends StatelessWidget {
                 // FIX: Changed ListView.builder to GridView.builder
                 child: GridView.builder(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(18.0),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3, // At least 3 cards per row
                     crossAxisSpacing: 16.0,
@@ -84,7 +84,9 @@ class CategoriesModalSheet extends StatelessWidget {
                               child: Text(
                                 category.name,
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.labelLarge,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.labelLarge?.copyWith(fontSize: 12),
                                 overflow:
                                     TextOverflow.ellipsis, // Handle long names
                                 maxLines: 2, // Allow up to 2 lines for names

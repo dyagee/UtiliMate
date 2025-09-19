@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:utilimate/services/theme_service.dart';
 
@@ -10,6 +11,27 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  String _appVersion = '...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      setState(() {
+        _appVersion = packageInfo.version;
+      });
+    } catch (e) {
+      setState(() {
+        _appVersion = '---';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
@@ -128,6 +150,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: TextStyle(
                           fontSize: 16 * themeService.fontSizeFactor,
                         ), // Preview text
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // App Info Card
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 24),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(5.0),
+                      child: Image.asset(
+                        'lib/assets/images/utilimate-logo.png', // Placeholder asset path
+                        height: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Utilimate', // Placeholder app name
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 2.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Version $_appVersion',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[700],
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ],
