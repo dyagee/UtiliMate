@@ -13,17 +13,18 @@ class AdManager {
   }
 
   // Test Ad Unit IDs
-  static const String bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
-  static const String interstitialAdUnitId =
-      'ca-app-pub-3940256099942544/1033173712';
-  static const String rewardedAdUnitId =
-      'ca-app-pub-3940256099942544/5224354917';
-  // Ad Unit IDs
-  // static const String bannerAdUnitId = 'ca-app-pub-2416673076573660/1493290195';
+  // static const String bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
   // static const String interstitialAdUnitId =
-  //     'ca-app-pub-2416673076573660/4081878791';
+  //     'ca-app-pub-3940256099942544/1033173712';
   // static const String rewardedAdUnitId =
-  //     'ca-app-pub-2416673076573660/5301808732';
+  //     'ca-app-pub-3940256099942544/5224354917';
+
+  // Ad Unit IDs
+  static const String bannerAdUnitId = 'ca-app-pub-2416673076573660/1493290195';
+  static const String interstitialAdUnitId =
+      'ca-app-pub-2416673076573660/4081878791';
+  static const String rewardedAdUnitId =
+      'ca-app-pub-2416673076573660/5301808732';
 
   // Private fields to hold ad instances and their loading state
   BannerAd? _bannerAd;

@@ -5,7 +5,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
 import 'package:utilimate/services/ad_manager.dart';
 import 'package:utilimate/widgets/loading_indicator.dart';
-import 'package:utilimate/widgets/confirmation_dialog.dart';
+// import 'package:utilimate/widgets/confirmation_dialog.dart';
 import 'package:utilimate/widgets/custom_app_bar.dart';
 import 'package:utilimate/widgets/custom_button.dart';
 import 'package:path_provider/path_provider.dart';
@@ -290,74 +290,74 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
     }
   }
 
-  Future<void> _deleteFile(FileSystemEntity file) async {
-    developer.log('Attempting to delete file: ${file.path}');
-    bool? confirmDelete = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return ConfirmationDialog(
-          title: 'Confirm Delete',
-          message:
-              'Are you sure you want to delete "${file.path.split('/').last}"?',
-          onConfirm: () {
-            // FIX: Added log to confirm button press
-            developer.log('ConfirmationDialog: Confirm button pressed.');
-            Navigator.of(dialogContext).pop(true);
-          },
-          confirmButtonText: 'Delete',
-          confirmButtonColor: Colors.red,
-          onCancel: () {
-            // FIX: Added log to cancel button press
-            developer.log('ConfirmationDialog: Cancel button pressed.');
-            Navigator.of(dialogContext).pop(false);
-          },
-          cancelButtonText: 'Cancel',
-        );
-      },
-    );
+  // Future<void> _deleteFile(FileSystemEntity file) async {
+  //   developer.log('Attempting to delete file: ${file.path}');
+  //   bool? confirmDelete = await showDialog<bool>(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (BuildContext dialogContext) {
+  //       return ConfirmationDialog(
+  //         title: 'Confirm Delete',
+  //         message:
+  //             'Are you sure you want to delete "${file.path.split('/').last}"?',
+  //         onConfirm: () {
+  //           // FIX: Added log to confirm button press
+  //           developer.log('ConfirmationDialog: Confirm button pressed.');
+  //           Navigator.of(dialogContext).pop(true);
+  //         },
+  //         confirmButtonText: 'Delete',
+  //         confirmButtonColor: Colors.red,
+  //         onCancel: () {
+  //           // FIX: Added log to cancel button press
+  //           developer.log('ConfirmationDialog: Cancel button pressed.');
+  //           Navigator.of(dialogContext).pop(false);
+  //         },
+  //         cancelButtonText: 'Cancel',
+  //       );
+  //     },
+  //   );
 
-    // FIX: Log the exact value returned by showDialog
-    developer.log('showDialog for deletion returned: $confirmDelete');
+  //   // FIX: Log the exact value returned by showDialog
+  //   developer.log('showDialog for deletion returned: $confirmDelete');
 
-    if (confirmDelete == true) {
-      developer.log('User confirmed deletion for: ${file.path}');
-      try {
-        if (await file.exists()) {
-          await file.delete(recursive: true);
-          developer.log('File deleted successfully: ${file.path}');
-          if (mounted) {
-            _showSnackBar('File "${file.path.split('/').last}" deleted.');
-          }
-          _loadFiles();
-        } else {
-          developer.log('File does not exist at path: ${file.path}');
-          if (mounted) {
-            _showSnackBar(
-              'File "${file.path.split('/').last}" not found. It might have been moved or deleted externally.',
-              isError: true,
-            );
-          }
-        }
-      } catch (e, stackTrace) {
-        developer.log(
-          'Error deleting file: $e',
-          error: e,
-          stackTrace: stackTrace,
-        );
-        if (mounted) {
-          _showSnackBar(
-            'Failed to delete file: ${e.toString()}. Please check app permissions or if the file is in use.',
-            isError: true,
-          );
-        }
-      }
-    } else {
-      developer.log(
-        'File deletion cancelled by user. Returned value: $confirmDelete',
-      );
-    }
-  }
+  //   if (confirmDelete == true) {
+  //     developer.log('User confirmed deletion for: ${file.path}');
+  //     try {
+  //       if (await file.exists()) {
+  //         await file.delete(recursive: true);
+  //         developer.log('File deleted successfully: ${file.path}');
+  //         if (mounted) {
+  //           _showSnackBar('File "${file.path.split('/').last}" deleted.');
+  //         }
+  //         _loadFiles();
+  //       } else {
+  //         developer.log('File does not exist at path: ${file.path}');
+  //         if (mounted) {
+  //           _showSnackBar(
+  //             'File "${file.path.split('/').last}" not found. It might have been moved or deleted externally.',
+  //             isError: true,
+  //           );
+  //         }
+  //       }
+  //     } catch (e, stackTrace) {
+  //       developer.log(
+  //         'Error deleting file: $e',
+  //         error: e,
+  //         stackTrace: stackTrace,
+  //       );
+  //       if (mounted) {
+  //         _showSnackBar(
+  //           'Failed to delete file: ${e.toString()}. Please check app permissions or if the file is in use.',
+  //           isError: true,
+  //         );
+  //       }
+  //     }
+  //   } else {
+  //     developer.log(
+  //       'File deletion cancelled by user. Returned value: $confirmDelete',
+  //     );
+  //   }
+  // }
 
   Future<void> _shareFile(String path) async {
     try {
@@ -596,14 +596,14 @@ class _FileBrowserScreenState extends State<FileBrowserScreen> {
                               onPressed: () => _shareFile(file.path),
                               tooltip: 'Share',
                             ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.delete,
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                              onPressed: () => _deleteFile(file),
-                              tooltip: 'Delete',
-                            ),
+                            // IconButton(
+                            //   icon: Icon(
+                            //     Icons.delete,
+                            //     color: Theme.of(context).colorScheme.error,
+                            //   ),
+                            //   onPressed: () => _deleteFile(file),
+                            //   tooltip: 'Delete',
+                            // ),
                           ],
                         ),
                         onTap: () => _openFile(file.path),
