@@ -12,6 +12,8 @@ class ToolGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Variable to detect when in landscape
+    var screenSize = MediaQuery.of(context).size;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -28,9 +30,15 @@ class ToolGrid extends StatelessWidget {
           ),
         Expanded(
           child: GridView.builder(
-            padding: const EdgeInsets.all(16.0),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, // Adjust as needed for your layout
+            padding:
+                screenSize.width > screenSize.height
+                    ? EdgeInsets.symmetric(vertical: 16.00, horizontal: 78.00)
+                    : EdgeInsets.all(16.0),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount:
+                  screenSize.width > screenSize.height
+                      ? 4
+                      : 2, // Adjust as needed for your layout
               crossAxisSpacing: 16.0,
               mainAxisSpacing: 16.0,
               childAspectRatio: 1.0, // Adjust if cards are not square

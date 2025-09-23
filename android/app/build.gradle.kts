@@ -8,6 +8,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+dependencies {
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+    // Add language package you need to use
+    //implementation ("com.google.mlkit:text-recognition-chinese:16.0.0")
+    //implementation ("com.google.mlkit:text-recognition-devanagari:16.0.0")
+    //implementation ("com.google.mlkit:text-recognition-japanese:16.0.0")
+    //implementation ("com.google.mlkit:text-recognition-korean:16.0.0")
+}
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -53,8 +62,16 @@ android {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
-            //signingConfig = signingConfigs.getByName("release")
+            //signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+
+            // To reduce app resources size
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

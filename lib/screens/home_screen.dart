@@ -17,13 +17,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Variable to detect when in landscape
+    var screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(title: const Text('UtiliMate')),
       body: GridView.builder(
         // Or ListView.builder, depending on your layout
-        padding: const EdgeInsets.all(16.0),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // Adjust as needed
+        padding:
+            screenSize.width > screenSize.height
+                ? EdgeInsets.symmetric(vertical: 16.00, horizontal: 78.00)
+                : EdgeInsets.all(16.0),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount:
+              screenSize.width > screenSize.height ? 4 : 2, // Adjust as needed
           crossAxisSpacing: 16.0,
           mainAxisSpacing: 16.0,
           childAspectRatio: 1.0,

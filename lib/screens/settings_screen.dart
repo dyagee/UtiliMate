@@ -34,12 +34,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Variable to detect landscape mode
+    var screenSize = MediaQuery.of(context).size;
     final themeService = Provider.of<ThemeService>(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding:
+            screenSize.width > screenSize.height
+                ? EdgeInsets.symmetric(horizontal: 78, vertical: 24)
+                : EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
